@@ -21,6 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+// #define NOSAVE
 
 //#define ONLINEMODE
 
@@ -39,6 +40,7 @@ using static System.Net.Mime.MediaTypeNames;
 
 namespace ShiftOS.Engine
 {
+    [Obsolete("Use the servers.conf file instead.")]
     public class EngineConfig
     {
         public bool ConnectToMud = true;
@@ -46,11 +48,37 @@ namespace ShiftOS.Engine
         public int MudDefaultPort = 13370;
     }
 
+    /// <summary>
+    /// Management class for the ShiftOS save system.
+    /// </summary>
     public static class SaveSystem
     {
+        /// <summary>
+        /// Boolean representing whether the system is shutting down.
+        /// </summary>
         public static bool ShuttingDown = false;
 
+        /// <summary>
+        /// Gets or sets the current logged in client-side user.
+        /// </summary>
+        public static ClientSave CurrentUser { get; set; }
+
+        /// <summary>
+        /// Boolean representing whether the save system is ready to be used.
+        /// </summary>
+        public static AutoResetEvent Ready = new AutoResetEvent(false);
+        public static bool IsSandbox = false;
+
+        /// <summary>
+        /// Occurs before the save system connects to the ShiftOS Digital Society.
+        /// </summary>
+        public static event Action PreDigitalSocietyConnection;
+
+        /// <summary>
+        /// Gets or sets the current server-side save file.
+        /// </summary>
         public static Save CurrentSave { get; set; }
+
 
         /// <summary>
         /// Start the entire ShiftOS engine.
@@ -58,14 +86,18 @@ namespace ShiftOS.Engine
         /// <param name="useDefaultUI">Whether ShiftOS should initiate it's Windows Forms front-end.</param>
         public static void Begin(bool useDefaultUI = true)
         {
+            AppDomain.CurrentDomain.UnhandledException += (o, a) =>
+            {
+                CrashHandler.Start((Exception)a.ExceptionObject);
+            };
+
             if (!System.IO.File.Exists(Paths.SaveFile))
             {
                 var root = new ShiftOS.Objects.ShiftFS.Directory();
                 root.Name = "System";
-                root.permissions = Permissions.All;
+                root.permissions = UserPermissions.Guest;
                 System.IO.File.WriteAllText(Paths.SaveFile, JsonConvert.SerializeObject(root));
             }
-
 
             if (Utils.Mounts.Count == 0)
                 Utils.Mount(System.IO.File.ReadAllText(Paths.SaveFile));
@@ -73,6 +105,9 @@ namespace ShiftOS.Engine
 
             Localization.SetupTHETRUEDefaultLocals();
             SkinEngine.Init();
+            Random rnd = new Random();
+            int loadingJoke1 = rnd.Next(10);
+            int loadingJoke2 = rnd.Next(11);
 
             TerminalBackend.OpenTerminal();
 
@@ -91,159 +126,485 @@ namespace ShiftOS.Engine
                 }
 
                 Thread.Sleep(350);
-                Console.WriteLine("Initiating kernel...");
+                Console.WriteLine("{MISC_KERNELVERSION}");
+                Thread.Sleep(50);
+                Console.WriteLine("Copyright (c) 2018 DevX. Licensed under MIT.");
+                Console.WriteLine("");
+                Console.WriteLine("THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR");
+                Console.WriteLine("IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,");
+                Console.WriteLine("FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE");
+                Console.WriteLine("AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER");
+                Console.WriteLine("LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,");
+                Console.WriteLine("OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE");
+                Console.WriteLine("SOFTWARE.");
+                Console.WriteLine("");
                 Thread.Sleep(250);
-                Console.WriteLine("Reading filesystem...");
-                Thread.Sleep(100);
-                Console.WriteLine("Reading configuration...");
+                Console.WriteLine("{MISC_KERNELBOOTED}");
+                Console.WriteLine("{MISC_SHIFTFSDRV}");
+                Thread.Sleep(350);
+                Console.WriteLine("{MISC_SHIFTFSBLOCKSREAD}");
+                Console.WriteLine("{LOADINGMSG1_" + loadingJoke1 + "}");
+                Thread.Sleep(500);
+                Console.WriteLine("{MISC_LOADINGCONFIG}");
+                Thread.Sleep(30);
+                Console.WriteLine("{MISC_BUILDINGCMDS}");
+                TerminalBackend.PopulateTerminalCommands();
 
-                Console.WriteLine("{CONNECTING_TO_MUD}");
-
-                if (defaultConf.ConnectToMud == true)
+                if (IsSandbox == false)
                 {
+                    Console.WriteLine("{MISC_CONNECTINGTONETWORK}");
+
+                    Ready.Reset();
+
+                    if (PreDigitalSocietyConnection != null)
+                    {
+                        PreDigitalSocietyConnection?.Invoke();
+                        Ready.WaitOne();
+                    }
+
+                    ServerManager.GUIDReceived += (str) =>
+                    {
+                        //Connection successful! Stop waiting!
+                        Console.WriteLine("{MISC_CONNECTIONSUCCESSFUL}");
+                        Thread.Sleep(100);
+                        Console.WriteLine("{LOADINGMSG2_" + loadingJoke2 + "}");
+                        Thread.Sleep(500);
+                    };
+
                     try
                     {
-                        bool guidReceived = false;
-                        ServerManager.GUIDReceived += (str) =>
+                        if (ServerManager.ServerOnline)
                         {
-                            guidReceived = true;
-                            Console.WriteLine("{CONNECTION_SUCCESSFUL}");
-                        };
-
-                        ServerManager.Initiate("secondary4162.cloudapp.net", 13370);
-                        while(guidReceived == false)
-                        {
-
+                            ServerManager.Initiate(UserConfig.Get().DigitalSocietyAddress, UserConfig.Get().DigitalSocietyPort);
+                            // This halts the client until the connection is successful.
+                            ServerManager.guidReceiveARE.WaitOne();
+                            Console.WriteLine("{MISC_DHCPHANDSHAKEFINISHED}");
                         }
+                        else
+                        {
+                            Console.WriteLine("{MISC_NONETWORK}");
+                            Console.WriteLine("{LOADINGMSG2_" + loadingJoke2 + "}");
+                        }
+                        FinishBootstrap();
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine("{ERROR}: " + ex.Message);
+                        // "No errors, this never gets called."
+                        Console.WriteLine("[inetd] SEVERE: " + ex.Message);
+                        string dest = "Startup Exception " + DateTime.Now.ToString().Replace("/", "-").Replace(":", "-") + ".txt";
+                        System.IO.File.WriteAllText(dest, ex.ToString());
+                        Console.WriteLine("[inetd] Full exception details have been saved to: " + dest);
                         Thread.Sleep(3000);
-                        ServerManager.StartLANServer();
+                        System.Diagnostics.Process.GetCurrentProcess().Kill();
                     }
+
+                    //Nothing happens past this point - but the client IS connected! It shouldn't be stuck in that while loop above.
                 }
                 else
                 {
-                    ServerManager.StartLANServer();
-                }
-
-                ServerManager.MessageReceived += (msg) =>
-                {
-                    if(msg.Name == "mud_savefile")
+                    Console.WriteLine("{MISC_SANDBOXMODE}");
+                    CurrentSave = new Save
                     {
-                        CurrentSave = JsonConvert.DeserializeObject<Save>(msg.Contents);
-                    }
-                    else if(msg.Name == "mud_login_denied")
+                        IsSandbox = true,
+                        Username = "sandbox",
+                        Password = "sandbox",
+                        SystemName = "shiftos",
+                        Users = new List<ClientSave>
+                        {
+                            new ClientSave
+                            {
+                                Username = "user",
+                                Password = "",
+                                Permissions = 0
+                            }
+                        },
+                        Class = 0,
+                        ID = new Guid(),
+                        Upgrades = new Dictionary<string, bool>(),
+                        CurrentLegions = null,
+                        IsMUDAdmin = false,
+                        IsPatreon = false,
+                        Language = "english",
+                        LastMonthPaid = 0,
+                        MajorVersion = 1,
+                        MinorVersion = 0,
+                        MusicEnabled = false,
+                        MusicVolume = 100,
+                        MyShop = "",
+                        PasswordHashed = false,
+                        PickupPoint = "",
+                        RawReputation = 0.0f,
+                        Revision = 0,
+                        ShiftnetSubscription = 0,
+                        SoundEnabled = true,
+                        StoriesExperienced = null,
+                        StoryPosition = 0,
+                        UniteAuthToken = "",
+                    };
+
+                    CurrentUser = CurrentSave.Users.First();
+
+                    Localization.SetupTHETRUEDefaultLocals();
+
+                    Shiftorium.Init();
+
+                    TerminalBackend.InStory = false;
+                    TerminalBackend.PrefixEnabled = true;
+
+                    Desktop.InvokeOnWorkerThread(new Action(() =>
                     {
-                        oobe.PromptForLogin();
-                    }
-                };
+                        ShiftOS.Engine.Scripting.LuaInterpreter.RunSft(Paths.GetPath("kernel.sft"));
+                    }));
 
-                ReadSave();
 
-                while(CurrentSave == null)
-                {
-
+                    Desktop.InvokeOnWorkerThread(new Action(() => Desktop.PopulateAppLauncher()));
+                    GameReady?.Invoke();
                 }
 
-                Shiftorium.Init();
-
-                while (CurrentSave.StoryPosition < 5)
-                {
-
-                }
-
-                Thread.Sleep(75);
-
-
-
-                if (Shiftorium.UpgradeInstalled("desktop"))
-                {
-                    Console.Write("{START_DESKTOP}");
-
-                    Thread.Sleep(50);
-                    Console.WriteLine("   ...{DONE}.");
-                }
-
-                Story.Start();
-
-
-                Thread.Sleep(50);
-                Console.WriteLine("{SYSTEM_INITIATED}");
-
-                TerminalBackend.InStory = false;
-                Shiftorium.LogOrphanedUpgrades = true;
-                Desktop.InvokeOnWorkerThread(new Action(() => Desktop.PopulateAppLauncher()));
-                GameReady?.Invoke();
             }));
             thread.IsBackground = true;
             thread.Start();
         }
 
-        public delegate void EmptyEventHandler();
-
-        public static List<ClientSave> Users
+        /// <summary>
+        /// Finish bootstrapping the engine.
+        /// </summary>
+        private static void FinishBootstrap()
         {
-            get;
-            private set;
-        }
+            ServerMessageReceived savehandshake = null;
 
-        public static event EmptyEventHandler GameReady;
-
-        public static void TransferCodepointsToVoid(int amount)
-        {
-            CurrentSave.Codepoints -= amount;
-            if(!Shiftorium.Silent)
-                Console.WriteLine($"{{SHIFTORIUM_TRANSFERRED_TO}}: {amount} -> sys");
-        }
-
-        public static void ReadSave()
-        {
-            //Migrate old saves.
-            if(System.IO.Directory.Exists("C:\\ShiftOS2"))
+            savehandshake = (msg) =>
             {
-                Console.WriteLine("Old save detected. Migrating filesystem to MFS...");
-                foreach (string file in System.IO.Directory.EnumerateDirectories("C:\\ShiftOS2")
-.Select(d => new DirectoryInfo(d).FullName))
+                if (msg.Name == "mud_savefile")
                 {
-                    if(!Utils.DirectoryExists(file.Replace("C:\\ShiftOS2\\", "0:/").Replace("\\", "/")))
-                    Utils.CreateDirectory(file.Replace("C:\\ShiftOS2\\", "0:/").Replace("\\", "/"));
+                    ServerManager.MessageReceived -= savehandshake;
+                    try
+                    {
+                        CurrentSave = JsonConvert.DeserializeObject<Save>(msg.Contents);
+                    }
+                    catch
+                    {
+                        Console.WriteLine("{ENGINE_CANNOTLOADSAVE}");
+                        oobe.PromptForLogin();
+                    }
+                    }
+                else if (msg.Name == "mud_login_denied")
+                {
+                    ServerManager.MessageReceived -= savehandshake;
+                    oobe.PromptForLogin();
                 }
-                foreach (string file in System.IO.Directory.EnumerateFiles("C:\\ShiftOS2"))
-                {
+            };
+            ServerManager.MessageReceived += savehandshake;
 
-                    string rfile = Path.GetFileName(file);
-                    Utils.WriteAllBytes(file.Replace("C:\\ShiftOS2\\", "0:/").Replace("\\", "/"), System.IO.File.ReadAllBytes(file));
-                    Console.WriteLine("Exported file " + file);
-                }
+
+            ReadSave();
+
+            while (CurrentSave == null)
+            {
+                Thread.Sleep(10);
+            }
+
+            Shiftorium.Init();
+
+            while (CurrentSave.StoryPosition < 1)
+            {
+                Thread.Sleep(10);
+            }
+
+            Thread.Sleep(75);
+
+            Thread.Sleep(50);
+            Console.WriteLine("{MISC_ACCEPTINGLOGINS}");
+
+            Sysname:
+            bool waitingForNewSysName = false;
+            bool gobacktosysname = false;
+
+            if (string.IsNullOrWhiteSpace(CurrentSave.SystemName))
+            {
+                Infobox.PromptText("{TITLE_ENTERSYSNAME}", "{PROMPT_ENTERSYSNAME}", (name) =>
+                {
+                    if (string.IsNullOrWhiteSpace(name))
+                        Infobox.Show("{TITLE_INVALIDNAME}", "{PROMPT_INVALIDNAME}.", () =>
+                        {
+                            gobacktosysname = true;
+                            waitingForNewSysName = false;
+                        });
+                    else if (name.Length < 5)
+                        Infobox.Show("{TITLE_VALUESMALL}", "{PROMPT_SMALLSYSNAME}", () =>
+                        {
+                            gobacktosysname = true;
+                            waitingForNewSysName = false;
+                        });
+                    else
+                    {
+                        CurrentSave.SystemName = name;
+                        SaveSystem.SaveGame();
+                        gobacktosysname = false;
+                        waitingForNewSysName = false;
+                    }
+                });
+
 
             }
 
-
-            if (Utils.FileExists(Paths.SaveFileInner))
+            while (waitingForNewSysName)
             {
-                oobe.ShowSaveTransfer(JsonConvert.DeserializeObject<Save>(Utils.ReadAllText(Paths.SaveFileInner)));
+                Thread.Sleep(10);
+            }
+
+            if (gobacktosysname)
+            {
+                goto Sysname;
+            }
+
+            if (CurrentSave.Users == null)
+                CurrentSave.Users = new List<ClientSave>();
+
+            Console.WriteLine($@"
+                   `-:/++++::.`                   
+              .+ydNMMMMMNNMMMMMNhs/.              
+           /yNMMmy+:-` `````.-/ohNMMms-           
+        `oNMMh/.`:oydmNMMMMNmhs+- .+dMMm+`             {{GEN_WELCOME}}
+      `oMMmo``+dMMMMMMMMMMMMMMMMMNh/`.sNMN+       
+     :NMN+ -yMMMMMMMNdhyssyyhdmNMMMMNs``sMMd.          {{GEN_SYSTEMSTATUS}}
+    oMMd.`sMMMMMMd+.            `/MMMMN+ -mMN:         ----------------------
+   oMMh .mMMMMMM/     `-::::-.`  :MMMMMMh`.mMM:   
+  :MMd .NMMMMMMs    .dMMMMMMMMMNddMMMMMMMd`.NMN.        {{GEN_CODEPOINTS}}:     {SaveSystem.CurrentSave.Codepoints}
+  mMM. dMMMMMMMo    -mMMMMMMMMMMMMMMMMMMMMs /MMy        
+ :MMh :MMMMMMMMm`     .+shmMMMMMMMMMMMMMMMN` NMN`                       
+ oMM+ sMMMMMMMMMN+`        `-/smMMMMMMMMMMM: hMM:       
+ sMM+ sMMMMMMMMMMMMds/-`        .sMMMMMMMMM/ yMM/ 
+ +MMs +MMMMMMMMMMMMMMMMMmhs:`     +MMMMMMMM- dMM-       {{GEN_SYSTEMNAME}}:    {CurrentSave.SystemName.ToUpper()}
+ .MMm `NMMMMMMMMMMMMMMMMMMMMMo    `NMMMMMMd .MMN        {{GEN_USERS}}:          {Users.Count()}.
+  hMM+ +MMMMMMmsdNMMMMMMMMMMN/    -MMMMMMN- yMM+        
+  `NMN- oMMMMMd   `-/+osso+-     .mMMMMMN: +MMd   
+   -NMN: /NMMMm`               :yMMMMMMm- oMMd`   
+    -mMMs``sMMMMNdhso++///+oydNMMMMMMNo .hMMh`    
+     `yMMm/ .omMMMMMMMMMMMMMMMMMMMMd+``oNMNo      
+       -hMMNo. -ohNMMMMMMMMMMMMmy+. -yNMNy`       
+         .sNMMms/. `-/+++++/:-` ./yNMMmo`         
+            :sdMMMNdyso+++ooshdNMMMdo-            
+               `:+yhmNNMMMMNNdhs+-                
+                       ````                       ");
+
+            if (CurrentSave.Users.Count == 0)
+            {
+                CurrentSave.Users.Add(new ClientSave
+                {
+                    Username = "root",
+                    Password = "",
+                    Permissions = UserPermissions.Root
+                });
+                Console.WriteLine("{MISC_NOUSERS}");
+            }
+            TerminalBackend.InStory = false;
+
+            TerminalBackend.PrefixEnabled = false;
+
+            if (LoginManager.ShouldUseGUILogin)
+            {
+                Action<ClientSave> Completed = null;
+                Completed += (user) =>
+                {
+                    CurrentUser = user;
+                    LoginManager.LoginComplete -= Completed;
+                };
+                LoginManager.LoginComplete += Completed;
+                Desktop.InvokeOnWorkerThread(() =>
+                {
+                    LoginManager.PromptForLogin();
+                });
+                while (CurrentUser == null)
+                {
+                    Thread.Sleep(10);
+                }
             }
             else
             {
-                if (Utils.FileExists(Paths.GetPath("user.dat")))
-                {
-                    var userdat = JsonConvert.DeserializeObject<ClientSave>(Utils.ReadAllText(Paths.GetPath("user.dat")));
 
-                    ServerManager.SendMessage("mud_login", $@"{{
-    username: ""{userdat.Username}"",
-    password: ""{userdat.Password}""
-}}");
-                }
-                else
+                Login:
+                string username = "";
+                int progress = 0;
+                bool goback = false;
+                TextSentEventHandler ev = null;
+                string loginstr = Localization.Parse("{GEN_LPROMPT}", new Dictionary<string, string>
                 {
-                    NewSave();
+                    ["%sysname"] = CurrentSave.SystemName
+                });
+                ev = (text) =>
+                {
+                    if (progress == 0)
+                    {
+                        string getuser = text.Remove(0, loginstr.Length);
+                        if (!string.IsNullOrWhiteSpace(getuser))
+                        {
+                            if (CurrentSave.Users.FirstOrDefault(x => x.Username == getuser) == null)
+                            {
+                                Console.WriteLine();
+                                Console.WriteLine("{ERR_NOUSER}");
+                                goback = true;
+                                progress++;
+                                TerminalBackend.TextSent -= ev;
+                                return;
+                            }
+                            username = getuser;
+                            progress++;
+                        }
+                        else
+                        {
+                            Console.WriteLine();
+                            Console.WriteLine("{ERR_NOUSER}");
+                            TerminalBackend.TextSent -= ev;
+                            goback = true;
+                            progress++;
+                        }
+                    }
+                    else if (progress == 1)
+                    {
+                        string passwordstr = Localization.Parse("{GEN_PASSWORD}: ");
+                        string getpass = text.Remove(0, passwordstr.Length);
+                        var user = CurrentSave.Users.FirstOrDefault(x => x.Username == username);
+                        if (user.Password == getpass)
+                        {
+                            Console.WriteLine();
+                            Console.WriteLine("{GEN_WELCOME}");
+                            CurrentUser = user;
+                            progress++;
+                        }
+                        else
+                        {
+                            Console.WriteLine();
+                            Console.WriteLine("{RES_DENIED}");
+                            goback = true;
+                            progress++;
+                        }
+                        TerminalBackend.TextSent -= ev;
+                    }
+                };
+                TerminalBackend.TextSent += ev;
+                Console.WriteLine();
+                Console.Write(loginstr);
+                ConsoleEx.Flush();
+                while (progress == 0)
+                {
+                    Thread.Sleep(10);
                 }
+                if (goback)
+                    goto Login;
+                Console.WriteLine();
+                Console.Write("{GEN_PASSWORD}: ");
+                ConsoleEx.Flush();
+                while (progress == 1)
+                    Thread.Sleep(10);
+                if (goback)
+                    goto Login;
             }
+            TerminalBackend.PrefixEnabled = true;
+            Shiftorium.LogOrphanedUpgrades = true;
+            Desktop.InvokeOnWorkerThread(new Action(() =>
+            {
+                ShiftOS.Engine.Scripting.LuaInterpreter.RunSft(Paths.GetPath("kernel.sft"));
+            }));
+
+
+            Desktop.InvokeOnWorkerThread(new Action(() => Desktop.PopulateAppLauncher()));
+            GameReady?.Invoke();
+
+            if (!string.IsNullOrWhiteSpace(CurrentSave.PickupPoint))
+            {
+                try
+                {
+                    if (Story.Context == null)
+                    {
+                        Story.Start(CurrentSave.PickupPoint);
+                    }
+                }
+                catch { }
+            }
+        }
+
+        /// <summary>
+        /// Delegate type for events with no caller objects or event arguments. You can use the () => {...} (C#) lambda expression with this delegate 
+        /// </summary>
+        public delegate void EmptyEventHandler();
+
+        /// <summary>
+        /// Gets a list of all client-side users.
+        /// </summary>
+        public static List<ClientSave> Users
+        {
+            get
+            {
+                return CurrentSave.Users;
+            }
+        }
+
+        /// <summary>
+        /// Occurs when the engine is loaded and the game can take over.
+        /// </summary>
+        public static event EmptyEventHandler GameReady;
+
+        /// <summary>
+        /// Deducts a set amount of Codepoints from the save file... and sends them to a place where they'll never be seen again.
+        /// </summary>
+        /// <param name="amount">The amount of Codepoints to deduct.</param>
+        public static void TransferCodepointsToVoid(ulong amount)
+        {
+            CurrentSave.Codepoints -= amount;
+            NotificationDaemon.AddNotification(NotificationType.CodepointsSent, amount);
+        }
+
+        /// <summary>
+        /// Restarts the game.
+        /// </summary>
+        public static void Restart()
+        {
+            TerminalBackend.InvokeCommand("sos.shutdown");
+            System.Windows.Forms.Application.Restart();
+        }
+
+        /// <summary>
+        /// Requests the save file from the server. If authentication fails, this will cause the user to be prompted for their website login and a new save will be created if none is associated with the login.
+        /// </summary>
+        public static void ReadSave()
+        {
+            string path;
+
+            path = "C:\\ShiftOS2\\";
+            //Migrate old saves.
+            if (System.IO.Directory.Exists(path) && !System.IO.File.Exists(path + "havemigrated"))
+            {
+                Console.WriteLine("Old save detected. Migrating filesystem to MFS...");
+                foreach (string file in System.IO.Directory.EnumerateFileSystemEntries(path))
+                {
+                    string dest = file.Replace(path, "0:/").Replace("\\", "/");
+                    if (System.IO.File.GetAttributes(file).HasFlag(FileAttributes.Directory))
+                        if (!Utils.DirectoryExists(dest))
+                            Utils.CreateDirectory(dest);
+                    else
+                    {
+                        string rfile = Path.GetFileName(file);
+                        Utils.WriteAllBytes(dest, System.IO.File.ReadAllBytes(file));
+                        Console.WriteLine("Exported file " + file);
+                    }
+                }
+                System.IO.File.WriteAllText(path + "havemigrated", "1.0 BETA");
+            }
+
+            path = Path.Combine(Paths.SaveDirectory, "autosave.save");
+
+            if (System.IO.File.Exists(path))
+                CurrentSave = JsonConvert.DeserializeObject<Save>(System.IO.File.ReadAllText(path));
+            else
+                NewSave();
+
 
         }
 
+        /// <summary>
+        /// Creates a new save, starting the Out Of Box Experience (OOBE).
+        /// </summary>
         public static void NewSave()
         {
             AppearanceManager.Invoke(new Action(() =>
@@ -256,37 +617,67 @@ namespace ShiftOS.Engine
             }));
         }
 
+        /// <summary>
+        /// Saves the game to the server, updating website stats if possible.
+        /// </summary>
         public static void SaveGame()
         {
-            if(!Shiftorium.Silent)
-                Console.WriteLine("");
-            if(!Shiftorium.Silent)
-                Console.Write("{SE_SAVING}... ");
-
-            string username = CurrentSave.Username;
-            string password = CurrentSave.Password;
-
-            if (!Utils.FileExists(Paths.GetPath("user.dat")))
+            if (!IsSandbox)
             {
-                Utils.WriteAllText(Paths.GetPath("user.dat"), $@"{{
-    username: ""{username}"",
-    password: ""{password}""
-}}");
-            }
+#if !NOSAVE
+                if (!Shiftorium.Silent)
+                    Console.WriteLine("");
+                if (!Shiftorium.Silent)
+                    Console.Write("{SE_SAVING}... ");
+                if (SaveSystem.CurrentSave != null)
+                {
+                    var serialisedSaveFile = JsonConvert.SerializeObject(CurrentSave, Formatting.Indented);
+                    new Thread(() =>
+                    {
+                        try
+                        {
+                            // please don't do networking on the main thread if you're just going to
+                            // discard the response, it's extremely slow
+                            ServerManager.SendMessage("mud_save", serialisedSaveFile);
+                        }
+                        catch { }
+                    })
+                    { IsBackground = false }.Start();
+                    if (!System.IO.Directory.Exists(Paths.SaveDirectory))
+                        System.IO.Directory.CreateDirectory(Paths.SaveDirectory);
 
-            ServerManager.SendMessage("mud_save", JsonConvert.SerializeObject(CurrentSave, Formatting.Indented));
-            if(!Shiftorium.Silent)
-                Console.WriteLine(" ...{DONE}.");
+                    System.IO.File.WriteAllText(Path.Combine(Paths.SaveDirectory, "autosave.save"), serialisedSaveFile);
+                }
+                if (!Shiftorium.Silent)
+                    Console.WriteLine(" ...{DONE}.");
+#endif
+            }
             System.IO.File.WriteAllText(Paths.SaveFile, Utils.ExportMount(0));
         }
 
-        public static void TransferCodepointsFrom(string who, int amount)
+        /// <summary>
+        /// Transfers codepoints from an arbitrary character to the save file.
+        /// </summary>
+        /// <param name="who">The character name</param>
+        /// <param name="amount">The amount of Codepoints.</param>
+        public static void TransferCodepointsFrom(string who, ulong amount)
         {
-            Console.WriteLine($"{{SHIFTORIUM_TRANSFERRED_FROM}}: {amount} <- {who}");
+            NotificationDaemon.AddNotification(NotificationType.CodepointsReceived, amount);
             CurrentSave.Codepoints += amount;
-            Console.Write($"{SaveSystem.CurrentSave.Username}@{SaveSystem.CurrentSave.SystemName}:~$ ");
         }
     }
 
+    /// <summary>
+    /// Delegate for handling Terminal text input.
+    /// </summary>
+    /// <param name="text">The text inputted by the user (including prompt text).</param>
     public delegate void TextSentEventHandler(string text);
+
+    /// <summary>
+    /// Denotes that this Terminal command or namespace is for developers.
+    /// </summary>
+    public class DeveloperAttribute : Attribute
+    {
+
+    }
 }

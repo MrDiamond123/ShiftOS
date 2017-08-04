@@ -37,26 +37,47 @@ using ShiftOS.WinForms.Tools;
 
 namespace ShiftOS.WinForms.Applications
 {
-    [Launcher("Skin Loader", true, "al_skin_loader")]
+    [FileHandler("ShiftOS Skin", ".skn", "fileiconskin")]
+    [Launcher("{TITLE_SKINLOADER}", true, "al_skin_loader", "{AL_CUSTOMIZATION}")]
     [RequiresUpgrade("skinning")]
     [WinOpen("skin_loader")]
-    public partial class Skin_Loader : UserControl, IShiftOSWindow
+    [DefaultTitle("{TITLE_SKINLOADER}")]
+    [DefaultIcon("iconSkinLoader")]
+    public partial class Skin_Loader : UserControl, IShiftOSWindow, IFileHandler
     {
         public Skin_Loader()
         {
             InitializeComponent();
-
+            SetupControls(pnlborder);
+            SetupControls(pnldesktop);
             LoadedSkin = JsonConvert.DeserializeObject<Skin>(JsonConvert.SerializeObject(SkinEngine.LoadedSkin));
             this.Load += (o, a) => { SetupUI(); };
             
+        }
+
+        public void OpenFile(string file)
+        {
+            AppearanceManager.SetupWindow(this);
+            LoadedSkin = JsonConvert.DeserializeObject<Skin>(Objects.ShiftFS.Utils.ReadAllText(file));
+            SetupUI();
+        }
+
+        public void SetupControls(Control ctrl)
+        {
+            ctrl.Tag = "keepbg keepfg keepfont";
+            foreach (Control c in ctrl.Controls)
+                SetupControls(c);
         }
 
         public Skin LoadedSkin { get; set; }
 
         public void SetupUI()
         {
-            SetupDesktop();
-            Setup();
+            if (LoadedSkin != null)
+            {
+                SetupDesktop();
+                Setup();
+            }
         }
 
         public void SetupDesktop()
@@ -68,7 +89,7 @@ namespace ShiftOS.WinForms.Applications
 
             //upgrades
 
-            if (SaveSystem.CurrentSave != null)
+            if (SaveSystem.CurrentSave != null && LoadedSkin != null)
             {
                 desktoppanel.Visible = ShiftoriumFrontend.UpgradeInstalled("desktop");
                 lbtime.Visible = ShiftoriumFrontend.UpgradeInstalled("desktop_clock_widget");
@@ -293,7 +314,7 @@ namespace ShiftOS.WinForms.Applications
                      System.IO.Directory.CreateDirectory(Paths.SharedFolder + "\\skins");
                  }
 
-                 string path = Paths.SharedFolder + "\\skins\\" + SaveSystem.CurrentSave.Username + "-" + fname;
+                 string path = Paths.SharedFolder + "\\skins\\" + SaveSystem.CurrentUser.Username + "-" + fname;
                  System.IO.File.WriteAllText(path, JsonConvert.SerializeObject(LoadedSkin));
                   
              })));
@@ -303,7 +324,15 @@ namespace ShiftOS.WinForms.Applications
         {
             AppearanceManager.SetupDialog(new FileDialog(new[] { ".skn" }, FileOpenerStyle.Open, new Action<string>((filename) =>
             {
-                LoadedSkin = JsonConvert.DeserializeObject<Skin>(ShiftOS.Objects.ShiftFS.Utils.ReadAllText(filename));
+                try
+                {
+                    LoadedSkin = JsonConvert.DeserializeObject<Skin>(ShiftOS.Objects.ShiftFS.Utils.ReadAllText(filename));
+                }
+                catch
+                {
+                    Infobox.Show("Invalid Skin", "This skin is not compatible with this version of ShiftOS.");
+                }
+                
                 SetupUI();
             })));
         }
@@ -316,6 +345,7 @@ namespace ShiftOS.WinForms.Applications
 
         public void OnSkinLoad()
         {
+            SetupUI();
         }
 
         public bool OnUnload()
@@ -325,6 +355,7 @@ namespace ShiftOS.WinForms.Applications
 
         public void OnUpgrade()
         {
+            SetupUI();
         }
     }
 }

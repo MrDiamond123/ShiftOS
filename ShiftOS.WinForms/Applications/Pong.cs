@@ -1,637 +1,418 @@
-/*
- * MIT License
- * 
- * Copyright (c) 2017 Michael VanOverbeek and ShiftOS devs
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data;
 using System.Drawing;
+using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using Newtonsoft.Json;
 using ShiftOS.Engine;
-using ShiftOS.Objects;
+using ShiftOS.WinForms.Tools;
 
 namespace ShiftOS.WinForms.Applications
 {
-    [Launcher("Pong", true, "al_pong")]
-    [WinOpen("pong")]
+    [Launcher("{TITLE_PONG}", true, "al_pong", "{AL_GAMES}")]
+    [WinOpen("{WO_PONG}")]
+    [DefaultTitle("{TITLE_PONG}")]
+    [DefaultIcon("iconPong")]
     public partial class Pong : UserControl, IShiftOSWindow
     {
-        int xVel = 7;
-        int yVel = 8;
-        int computerspeed = 8;
-        int level = 1;
-        int secondsleft = 60;
-        int casualposition;
-        double xveldec = 3.0;
-        double yveldec = 3.0;
-        double incrementx = 0.4;
-        double incrementy = 0.2;
-        int levelxspeed = 3;
-        int levelyspeed = 3;
-        int beatairewardtotal;
-        int beataireward = 1;
-        int[] levelrewards = new int[50];
-        int totalreward;
-        int countdown = 3;
-
-        bool aiShouldIsbeEnabled = true;
-
         public Pong()
         {
             InitializeComponent();
-        }
-
-        private void Pong_Load(object sender, EventArgs e)
-        {
-            setuplevelrewards();
-        }
-
-        // Move the paddle according to the mouse position.
-        private void pongMain_MouseMove(object sender, MouseEventArgs e)
-        {
-            var loc = this.PointToClient(MousePosition);
-            paddleHuman.Location = new Point(paddleHuman.Location.X, (loc.Y) - (paddleHuman.Height / 2));
-        }
-
-
-        // ERROR: Handles clauses are not supported in C#
-        private void gameTimer_Tick(object sender, EventArgs e)
-        {
-            if (this.Left < Screen.PrimaryScreen.Bounds.Width)
+            paddleWidth = pnlcanvas.Width / 30;
+            drawTimer = new Timer();
+            drawTimer.Interval = 1;
+            drawTimer.Tick += (o, a) =>
             {
-                ball.BackColor = SkinEngine.LoadedSkin.ControlTextColor;
-                paddleComputer.BackColor = SkinEngine.LoadedSkin.ControlTextColor;
-                paddleHuman.BackColor = SkinEngine.LoadedSkin.ControlTextColor;
-
-
-
-                //Set the computer player to move according to the ball's position.
-                if(aiShouldIsbeEnabled)
-                    if (ball.Location.X > 500 - xVel * 10 && xVel > 0)
-                    {
-                        if (ball.Location.Y > paddleComputer.Location.Y + 50)
-                        {
-                            paddleComputer.Location = new Point(paddleComputer.Location.X, paddleComputer.Location.Y + computerspeed);
-                        }
-                        if (ball.Location.Y < paddleComputer.Location.Y + 50)
-                        {
-                            paddleComputer.Location = new Point(paddleComputer.Location.X, paddleComputer.Location.Y - computerspeed);
-                        }
-                        casualposition = rand.Next(-150, 201);
-                    }
-                    else
-                    {
-                        //used to be me.location.y
-                        if (paddleComputer.Location.Y > this.Size.Height / 2 - paddleComputer.Height + casualposition)
-                        {
-                            paddleComputer.Location = new Point(paddleComputer.Location.X, paddleComputer.Location.Y - computerspeed);
-                        }
-                        //used to be me.location.y
-                        if (paddleComputer.Location.Y < this.Size.Height / 2 - paddleComputer.Height + casualposition)
-                        {
-                            paddleComputer.Location = new Point(paddleComputer.Location.X, paddleComputer.Location.Y + computerspeed);
-                        }
-                    }
-
-                //Set Xvel and Yvel speeds from decimal
-                if (xVel > 0)
-                    xVel = (int)Math.Round(xveldec);
-                if (xVel < 0)
-                    xVel = (int)-Math.Round(xveldec);
-                if (yVel > 0)
-                    yVel = (int)Math.Round(yveldec);
-                if (yVel < 0)
-                    yVel = (int)-Math.Round(yveldec);
-
-                // Move the game ball.
-                ball.Location = new Point(ball.Location.X + xVel, ball.Location.Y + yVel);
-
-                // Check for top wall.
-                if (ball.Location.Y < 0)
+                UpdateBall();
+                pnlcanvas.Refresh();
+            };
+            counterTimer = new Timer();
+            counterTimer.Interval = 1000;
+            counterTimer.Tick += (o, a) =>
+            {
+                if(secondsleft > 0)
                 {
-                    ball.Location = new Point(ball.Location.X, 0);
-                    yVel = -yVel;
-                }
-
-                // Check for bottom wall.
-                if (ball.Location.Y > pgcontents.Height - ball.Height)
-                {
-                    ball.Location = new Point(ball.Location.X, pgcontents.Height - ball.Size.Height);
-                    yVel = -yVel;
-                }
-
-                // Check for player paddle.
-                if (ball.Bounds.IntersectsWith(paddleHuman.Bounds))
-                {
-                    ball.Location = new Point(paddleHuman.Location.X + ball.Size.Width, ball.Location.Y);
-                    //randomly increase x or y speed of ball
-                    switch (rand.Next(1, 3))
-                    {
-                        case 1:
-                            xveldec = xveldec + incrementx;
-                            break;
-                        case 2:
-                            if (yveldec > 0)
-                                yveldec = yveldec + incrementy;
-                            if (yveldec < 0)
-                                yveldec = yveldec - incrementy;
-                            break;
-                    }
-                    xVel = -xVel;
-                }
-
-                // Check for computer paddle.
-                if (ball.Bounds.IntersectsWith(paddleComputer.Bounds))
-                {
-                    ball.Location = new Point(paddleComputer.Location.X - paddleComputer.Size.Width + 1, ball.Location.Y);
-                    xveldec = xveldec + incrementx;
-                    xVel = -xVel;
-                }
-
-                // Check for left wall.
-                if (ball.Location.X < -100)
-                {
-                    ball.Location = new Point(this.Size.Width / 2 + 200, this.Size.Height / 2);
-                    paddleComputer.Location = new Point(paddleComputer.Location.X, ball.Location.Y);
-                    if (xVel > 0)
-                        xVel = -xVel;
-                    pnllose.Show();
-                    gameTimer.Stop();
-                    counter.Stop();
-                    lblmissedout.Text = Localization.Parse("{YOU_MISSED_OUT_ON}:") + Environment.NewLine + lblstatscodepoints.Text.Replace(Localization.Parse("{CODEPOINTS}: "), "") + Localization.Parse(" {CODEPOINTS}");
-                    if (ShiftoriumFrontend.UpgradeInstalled("pong_upgrade_2"))
-                    {
-                        totalreward = levelrewards[level - 1] + beatairewardtotal;
-                        double onePercent = (totalreward / 100);
-                        lblbutyougained.Text = Localization.Parse("{BUT_YOU_GAINED}:") + Environment.NewLine + onePercent.ToString("") + (Localization.Parse(" {CODEPOINTS}"));
-                        SaveSystem.TransferCodepointsFrom("pong", (totalreward / 100));
-                    }
-                }
-
-                // Check for right wall.
-                if (ball.Location.X > this.Width - ball.Size.Width - paddleComputer.Width + 100)
-                {
-                    ball.Location = new Point(this.Size.Width / 2 + 200, this.Size.Height / 2);
-                    paddleComputer.Location = new Point(paddleComputer.Location.X, ball.Location.Y);
-                    if (xVel > 0)
-                        xVel = -xVel;
-                    beatairewardtotal = beatairewardtotal + beataireward;
-                    lblbeatai.Show();
-                    lblbeatai.Text = Localization.Parse($"{{PONG_BEAT_AI_REWARD_SECONDARY}}: {beataireward}");
-                    tmrcountdown.Start();
-                    gameTimer.Stop();
-                    counter.Stop();
-                }
-
-                //lblstats.Text = "Xspeed: " & Math.Abs(xVel) & " Yspeed: " & Math.Abs(yVel) & " Human Location: " & paddleHuman.Location.ToString & " Computer Location: " & paddleComputer.Location.ToString & Environment.NewLine & " Ball Location: " & ball.Location.ToString & " Xdec: " & xveldec & " Ydec: " & yveldec & " Xinc: " & incrementx & " Yinc: " & incrementy
-                lblstatsX.Text = Localization.Parse("{H_VEL}: ") + xveldec;
-                lblstatsY.Text = Localization.Parse("{V_VEL}: ") + yveldec;
-                lblstatscodepoints.Text = Localization.Parse("{CODEPOINTS}: ") + (levelrewards[level - 1] + beatairewardtotal).ToString();
-                lbllevelandtime.Text = Localization.Parse("{LEVEL}: " + level + " - " + secondsleft + " {SECONDS_LEFT}");
-
-                if (xVel > 20 || xVel < -20)
-                {
-                    paddleHuman.Width = Math.Abs(xVel);
-                    paddleComputer.Width = Math.Abs(xVel);
+                    secondsleft--;
                 }
                 else
                 {
-                    paddleHuman.Width = 20;
-                    paddleComputer.Width = 20;
+                    LevelComplete();
                 }
-
-                computerspeed = Math.Abs(yVel);
-
-                //  pgcontents.Refresh()
-                // pgcontents.CreateGraphics.FillRectangle(Brushes.Black, ball.Location.X, ball.Location.Y, ball.Width, ball.Height)
-
-            }
-        }
-
-        // ERROR: Handles clauses are not supported in C#
-        private void counter_Tick(object sender, EventArgs e)
-        {
-            if (this.Left < Screen.PrimaryScreen.Bounds.Width)
-            {
-                secondsleft = secondsleft - 1;
-                if (secondsleft == -1)
-                {
-                    secondsleft = 60;
-                    level = level + 1;
-                    generatenextlevel();
-                    pnlgamestats.Show();
-                    pnlgamestats.BringToFront();
-                    pnlgamestats.Location = new Point((pgcontents.Width / 2) - (pnlgamestats.Width / 2), (pgcontents.Height / 2) - (pnlgamestats.Height / 2));
-
-                    counter.Stop();
-                    gameTimer.Stop();
-                    SendHighscores();
-                }
-                lblstatscodepoints.Text = Localization.Parse("{CODEPOINTS}: ") + (levelrewards[level - 1] + beatairewardtotal).ToString();
-            }
-        }
-
-        public void SendHighscores()
-        {
-            var highscore = new PongHighscore
-            {
-                UserName = $"{SaveSystem.CurrentSave.Username}@{SaveSystem.CurrentSave.SystemName}",
-                HighestLevel = level,
-                HighestCodepoints = totalreward
             };
-            ServerManager.SendMessage("pong_sethighscore", JsonConvert.SerializeObject(highscore));
-        }
-
-        // ERROR: Handles clauses are not supported in C#
-        private void btnplayon_Click(object sender, EventArgs e)
-        {
-            xveldec = levelxspeed;
-            yveldec = levelyspeed;
-
-            secondsleft = 60;
-
-            tmrcountdown.Start();
-            lblbeatai.Text = Localization.Parse($"{{PONG_BEAT_AI_REWARD}}: {beataireward}");
-            pnlgamestats.Hide();
-            lblbeatai.Show();
-            ball.Location = new Point(paddleHuman.Location.X + paddleHuman.Width + 50, paddleHuman.Location.Y + paddleHuman.Height / 2);
-            if (xVel < 0)
-                xVel = Math.Abs(xVel);
-            lbllevelandtime.Text = Localization.Parse("{LEVEL}: " + level + " - " + secondsleft + " {SECONDS_LEFT}");
-        }
-
-        //Increase the ball speed stats for the next level
-        private void generatenextlevel()
-        {
-            lbllevelreached.Text = Localization.Parse("{YOU_REACHED_LEVEL} " + level + "!");
-
-            lblpreviousstats.Text = Localization.Parse("{INITIAL_H_VEL}: " + levelxspeed + Environment.NewLine + "{INITIAL_V_VEL}: " + levelyspeed + Environment.NewLine + "{INC_H_VEL}: " + incrementx + Environment.NewLine + "{INC_V_VEL}: " + incrementy);
-
-            switch (rand.Next(1, 3))
+#if DEBUG
+            this.KeyDown += (o, a) =>
             {
-                case 1:
-                    levelxspeed = levelxspeed + 1;
-                    break;
-                case 2:
-                    levelxspeed = levelxspeed + 2;
-                    break;
-            }
-
-            switch (rand.Next(1, 3))
-            {
-                case 1:
-                    levelyspeed = levelyspeed + 1;
-                    break;
-                case 2:
-                    levelyspeed = levelyspeed + 2;
-                    break;
-            }
-
-            switch (rand.Next(1, 6))
-            {
-                case 1:
-                    incrementx = incrementx + 0.1;
-                    break;
-                case 2:
-                    incrementx = incrementx + 0.2;
-                    break;
-                case 3:
-                    incrementy = incrementy + 0.1;
-                    break;
-                case 4:
-                    incrementy = incrementy + 0.2;
-                    break;
-                case 5:
-                    incrementy = incrementy + 0.3;
-                    break;
-            }
-
-            lblnextstats.Text = Localization.Parse("{INITIAL_H_VEL}: " + levelxspeed + Environment.NewLine + "{INITIAL_V_VEL}: " + levelyspeed + Environment.NewLine + "{INC_H_VEL}: " + incrementx + Environment.NewLine + "{INC_V_VEL}: " + incrementy);
-
-            if (level < 15)
-            {
-                if (ShiftoriumFrontend.UpgradeInstalled("pong_upgrade"))
+                if(a.KeyCode == Keys.D)
                 {
-                    beataireward = level * 10;
-                } else
-                {
-                    beataireward = level * 5;
+                    drawAiBall = !drawAiBall;                
                 }
-            }
-            else
+            };
+#endif
+        }
+
+        private double ballX = 0.0f;
+        private double ballY = 0.0f;
+
+        private double aiBallX = 0.0f;
+        private double aiBallY = 0.0f;
+
+
+        private double speedFactor = 0.0125;
+
+        private double xVel = 1;
+        private double yVel = 1;
+
+        private double aiXVel = 1;
+        private double aiYVel = 1;
+
+
+        private int paddleWidth;
+
+        Timer counterTimer = null;
+
+        private long codepointsToEarn = 0;
+        private int level = 1;
+
+
+        private double playerY = 0.0;
+        private double opponentY = 0.0;
+        private int secondsleft = 60;
+        bool doAi = true;
+        bool doBallCalc = true;
+
+        private string header = "";
+
+        private string counter = "";
+
+        private void Bounce(Rectangle ball, Rectangle paddle)
+        {
+            // reverse x velocity to send the ball the other way
+            xVel = -xVel;
+
+            // adjust y velocity based on where the ball hit the paddle
+            yVel = linear((ball.Top + (ball.Height / 2)), paddle.Top, paddle.Bottom, -1, 1);
+        }
+
+        public void UpdateBall()
+        {
+            if (doBallCalc)
             {
-                if (ShiftoriumFrontend.UpgradeInstalled("pong_upgrade"))
+                double ballXLocal = linear(ballX, -1.0, 1.0, 0, pnlcanvas.Width);
+                double ballYLocal = linear(ballY, -1.0, 1.0, 0, pnlcanvas.Height);
+
+                ballXLocal -= ((double)paddleWidth / 2);
+                ballYLocal -= ((double)paddleWidth / 2);
+
+                double aiBallXLocal = linear(aiBallX, -1.0, 1.0, 0, pnlcanvas.Width);
+                double aiBallYLocal = linear(aiBallY, -1.0, 1.0, 0, pnlcanvas.Height);
+
+                aiBallXLocal -= ((double)paddleWidth / 2);
+                aiBallYLocal -= ((double)paddleWidth / 2);
+
+
+                double playerYLocal = linear(playerY, -1.0, 1.0, 0, pnlcanvas.Height);
+                double opponentYLocal = linear(opponentY, -1.0, 1.0, 0, pnlcanvas.Height);
+
+                int paddleHeight = pnlcanvas.Height / 5;
+
+
+                Rectangle ballRect = new Rectangle((int)ballXLocal, (int)ballYLocal, paddleWidth, paddleWidth);
+
+                Rectangle aiBallRect = new Rectangle((int)aiBallXLocal, (int)aiBallYLocal, paddleWidth, paddleWidth);
+
+
+                Rectangle playerRect = new Rectangle((int)paddleWidth, (int)(playerYLocal - (int)(paddleHeight / 2)), (int)paddleWidth, (int)paddleHeight);
+                Rectangle opponentRect = new Rectangle((int)(pnlcanvas.Width - (paddleWidth * 2)), (int)(opponentYLocal - (int)(paddleHeight / 2)), (int)paddleWidth, (int)paddleHeight);
+
+                //Top and bottom walls:
+                if (ballRect.Top <= 0 || ballRect.Bottom >= pnlcanvas.Height)
+                    yVel = -yVel; //reverse the Y velocity
+
+                //top and bottom walls - ai
+                if (aiBallRect.Top <= 0 || aiBallRect.Bottom >= pnlcanvas.Height)
+                    aiYVel = -aiYVel; //reverse the Y velocity
+
+
+                //Left wall
+                if (ballRect.Left <= 0)
                 {
-                    double br = levelrewards[level - 1] / 10;
-                    beataireward = (int)Math.Round(br) * 10;
-                } else
-                {
-                    double br = levelrewards[level - 1] / 10;
-                    beataireward = (int)Math.Round(br) * 5;
+                    //You lose.
+                    codepointsToEarn = 0;
+                    Lose();
                 }
-            }
 
-            totalreward = levelrewards[level - 1] + beatairewardtotal;
-
-            btncashout.Text = Localization.Parse("{CASH_OUT_WITH_CODEPOINTS}");
-            btnplayon.Text = Localization.Parse("{PONG_PLAY_ON_FOR_MORE}");
-        }
-
-        private void setuplevelrewards()
-        {
-            if (ShiftoriumFrontend.UpgradeInstalled("pong_upgrade"))
-            {
-                levelrewards[0] = 0;
-                levelrewards[1] = 40;
-                levelrewards[2] = 120;
-                levelrewards[3] = 280;
-                levelrewards[4] = 580;
-                levelrewards[5] = 800;
-                levelrewards[6] = 1200;
-                levelrewards[7] = 1800;
-                levelrewards[8] = 2400;
-                levelrewards[9] = 3200;
-                levelrewards[10] = 4000;
-                levelrewards[11] = 5000;
-                levelrewards[12] = 6000;
-                levelrewards[13] = 8000;
-                levelrewards[14] = 10000;
-                levelrewards[15] = 12000;
-                levelrewards[16] = 16000;
-                levelrewards[17] = 20000;
-                levelrewards[18] = 26000;
-                levelrewards[19] = 32000;
-                levelrewards[20] = 40000;
-                levelrewards[21] = 50000;
-                levelrewards[22] = 64000;
-                levelrewards[23] = 80000;
-                levelrewards[24] = 100000;
-                levelrewards[25] = 120000;
-                levelrewards[26] = 150000;
-                levelrewards[27] = 180000;
-                levelrewards[28] = 220000;
-                levelrewards[29] = 280000;
-                levelrewards[30] = 360000;
-                levelrewards[31] = 440000;
-                levelrewards[32] = 540000;
-                levelrewards[33] = 640000;
-                levelrewards[34] = 800000;
-                levelrewards[35] = 1000000;
-                levelrewards[36] = 1280000;
-                levelrewards[37] = 1600000;
-                levelrewards[38] = 2000000;
-                levelrewards[39] = 3000000;
-                levelrewards[40] = 4000000;
-            } else
-            {
-                levelrewards[0] = 0;
-                levelrewards[1] = 20;
-                levelrewards[2] = 60;
-                levelrewards[3] = 140;
-                levelrewards[4] = 290;
-                levelrewards[5] = 400;
-                levelrewards[6] = 600;
-                levelrewards[7] = 900;
-                levelrewards[8] = 1200;
-                levelrewards[9] = 1600;
-                levelrewards[10] = 2000;
-                levelrewards[11] = 2500;
-                levelrewards[12] = 3000;
-                levelrewards[13] = 4000;
-                levelrewards[14] = 5000;
-                levelrewards[15] = 6000;
-                levelrewards[16] = 8000;
-                levelrewards[17] = 10000;
-                levelrewards[18] = 13000;
-                levelrewards[19] = 16000;
-                levelrewards[20] = 20000;
-                levelrewards[21] = 25000;
-                levelrewards[22] = 32000;
-                levelrewards[23] = 40000;
-                levelrewards[24] = 50000;
-                levelrewards[25] = 60000;
-                levelrewards[26] = 75000;
-                levelrewards[27] = 90000;
-                levelrewards[28] = 110000;
-                levelrewards[29] = 140000;
-                levelrewards[30] = 180000;
-                levelrewards[31] = 220000;
-                levelrewards[32] = 270000;
-                levelrewards[33] = 320000;
-                levelrewards[34] = 400000;
-                levelrewards[35] = 500000;
-                levelrewards[36] = 640000;
-                levelrewards[37] = 800000;
-                levelrewards[38] = 1000000;
-                levelrewards[39] = 1500000;
-                levelrewards[40] = 2000000;
-            }
-        }
-
-        // ERROR: Handles clauses are not supported in C#
-        private void countdown_Tick(object sender, EventArgs e)
-        {
-            if (this.Left < Screen.PrimaryScreen.Bounds.Width)
-            {
-                switch (countdown)
+                //Right wall
+                if (ballRect.Right >= pnlcanvas.Width)
                 {
-                    case 0:
-                        countdown = 3;
-                        lblcountdown.Hide();
-                        lblbeatai.Hide();
-                        gameTimer.Start();
-                        counter.Start();
-                        tmrcountdown.Stop();
-                        break;
-                    case 1:
-                        lblcountdown.Text = "1";
-                        countdown = countdown - 1;
-                        break;
-                    case 2:
-                        lblcountdown.Text = "2";
-                        countdown = countdown - 1;
-                        break;
-                    case 3:
-                        lblcountdown.Text = "3";
-                        countdown = countdown - 1;
-                        lblcountdown.Show();
-                        break;
+                    //You win.
+                    codepointsToEarn += CalculateAIBeatCP();
+                    Win();
                 }
-            
-            }
-        }
 
-        // ERROR: Handles clauses are not supported in C#
-        private void btncashout_Click(object sender, EventArgs e)
-        {
-            pnlgamestats.Hide();
-            pnlfinalstats.Show();
-            lblfinalcodepointswithtext.Text = Localization.Parse("{YOU_WON} " + totalreward + " {CODEPOINTS}!");
-            lblfinallevelreached.Text = Localization.Parse("{CODEPOINTS_FOR_BEATING_LEVEL}: ") + (level - 1).ToString();
-            lblfinallevelreward.Text = levelrewards[level - 1].ToString();
-            lblfinalcomputerreward.Text = beatairewardtotal.ToString();
-            lblfinalcodepoints.Text = totalreward + Localization.Parse(" {CODEPOINTS_SHORT}");
-            SaveSystem.TransferCodepointsFrom("pong", totalreward);
-        }
-
-        private void newgame()
-        {
-            pnlfinalstats.Hide();
-            pnllose.Hide();
-            pnlintro.Hide();
-
-            level = 1;
-            totalreward = 0;
-            if (ShiftoriumFrontend.UpgradeInstalled("pong_upgrade"))
-            {
-                beataireward = 10;
-            } else
-            {
-                beataireward = 5;
-            }
-            beatairewardtotal = 0;
-            secondsleft = 60;
-            lblstatscodepoints.Text = Localization.Parse("{CODEPOINTS}: ");
-            //reset stats text
-            lblstatsX.Text = Localization.Parse("{H_VEL}: ");
-            lblstatsY.Text = Localization.Parse("{V_VEL}: ");
-
-            levelxspeed = 3;
-            levelyspeed = 3;
-
-            incrementx = 0.4;
-            incrementy = 0.2;
-
-            xveldec = levelxspeed;
-            yveldec = levelyspeed;
-
-            tmrcountdown.Start();
-            lblbeatai.Text = Localization.Parse($"{{PONG_BEAT_AI_REWARD}}: {beataireward}");
-            pnlgamestats.Hide();
-            lblbeatai.Show();
-            ball.Location = new Point(paddleHuman.Location.X + paddleHuman.Width + 50, (paddleHuman.Location.Y + paddleHuman.Height) / 2);
-            if (xVel < 0)
-                xVel = Math.Abs(xVel);
-            lbllevelandtime.Text = Localization.Parse("{{LEVEL}}: " + level + " - " + secondsleft + " {SECONDS_LEFT}");
-        }
-
-        public void btnhighscore_Click(object s, EventArgs a)
-        {
-            pnlhighscore.BringToFront();
-            SetupHighScores();
-        }
-
-        public void SetupHighScores()
-        {
-            lbhighscore.Items.Clear();
-            ServerManager.MessageReceived += (msg) =>
-            {
-                if(msg.Name == "pong_highscores")
+                //Enemy paddle:
+                if (ballRect.IntersectsWith(opponentRect))
                 {
-                    var hs = JsonConvert.DeserializeObject<List<PongHighscore>>(msg.Contents);
-
-                    var orderedhs = hs.OrderByDescending(i => i.HighestLevel);
-
-                    foreach(var score in orderedhs)
+                    //check if the ball x is greater than the player paddle's middle coordinate
+                    if (ballRect.Right >= opponentRect.Left)
                     {
-                        this.Invoke(new Action(() =>
+                        Bounce(ballRect, opponentRect);
+                        aiXVel = xVel;
+                        aiYVel = yVel;
+                        doAi = false;
+                    }
+
+                }
+
+
+                //Enemy paddle - AI:
+                if (aiBallRect.IntersectsWith(opponentRect))
+                {
+                    //check if the ball x is greater than the player paddle's middle coordinate
+                    if (aiBallRect.Right >= opponentRect.Left)
+                    {
+                        doAi = false;
+                    }
+
+                }
+
+
+                //Player paddle:
+                if (ballRect.IntersectsWith(playerRect))
+                {
+                    if (ballRect.Left <= playerRect.Right)
+                    {
+                        Bounce(ballRect, playerRect);
+                        aiXVel = xVel;
+                        aiYVel = yVel;
+
+                        //reset the ai location
+                        aiBallX = ballX;
+                        aiBallY = ballY;
+                        doAi = true;
+                    }
+
+                }
+
+
+
+
+
+                ballX += xVel * speedFactor;
+                ballY += yVel * speedFactor;
+
+                aiBallX += aiXVel * (speedFactor * 1.5);
+                aiBallY += aiYVel * (speedFactor * 1.5);
+
+                if (doAi == true)
+                {
+                    if (opponentY != aiBallY)
+                    {
+                        if (opponentY < aiBallY)
                         {
-                            lbhighscore.Items.Add($"{score.UserName}\t\t\t{score.HighestLevel}\t\t{score.HighestCodepoints} CP");
-                        }));
+                            if (opponentY < 0.9)
+                                opponentY += speedFactor * level;
+                        }
+                        else
+                        {
+                            if (opponentY > -0.9)
+                                opponentY -= speedFactor * level;
+                        }
                     }
                 }
-            };
-            ServerManager.SendMessage("pong_gethighscores", null);
-            pnlhighscore.Show();
-        }
-
-        // ERROR: Handles clauses are not supported in C#
-        private void btnplayagain_Click(object sender, EventArgs e)
-        {
-            newgame();
-        }
-
-        // ERROR: Handles clauses are not supported in C#
-        private void btnlosetryagain_Click(object sender, EventArgs e)
-        {
-            newgame();
-        }
-
-        // ERROR: Handles clauses are not supported in C#
-        private void btnstartgame_Click(object sender, EventArgs e)
-        {
-            newgame();
-        }
-
-        Random rand = new Random();
-        // ERROR: Handles clauses are not supported in C#
-        private void tmrstoryline_Tick(object sender, EventArgs e)
-        {
-            // Random chance of showing getshiftnet storyline
-            int i = rand.Next(0, 100);
-
-            if (i >= 25 && i <= 50)
-            {
-                tmrstoryline.Stop();
             }
-
         }
 
-        // ERROR: Handles clauses are not supported in C#
-        private void me_closing(object sender, FormClosingEventArgs e)
+        public void Lose()
         {
-            tmrstoryline.Stop();
+            InitializeCoordinates();
+            counterTimer.Stop();
+            secondsleft = 60;
+            level = 1;
+            speedFactor = 0.0125;
+            pnlgamestart.Show();
+            pnlgamestart.BringToFront();
+            pnlgamestart.CenterParent();
+            Infobox.Show("{TITLE_PONG_YOULOSE}", "{PROMPT_PONGLOST}");
+            doAi = false;
+            doBallCalc = false;
         }
 
-        private void Label6_Click(object sender, EventArgs e)
+        public void LevelComplete()
+        {
+            level++;
+            doAi = false;
+            doBallCalc = false;
+            counterTimer.Stop();
+            ballX = 0;
+            ballY = 0;
+            aiBallX = 0;
+            aiBallY = 0;
+            pnllevelwon.CenterParent();
+            pnllevelwon.Show();
+            pnllevelwon.BringToFront();
+            lbltitle.Text = Localization.Parse("{PONG_LEVELREACHED}", new Dictionary<string, string>
+            {
+                ["%level"] = level.ToString()
+            });
+            lbltitle.Height = (int)CreateGraphics().MeasureString(lbltitle.Text, lbltitle.Font).Height;
+            codepointsToEarn += CalculateAIBeatCP() * 2;
+            speedFactor += speedFactor / level;
+            secondsleft = 60;
+        }
+
+        public long CalculateAIBeatCP()
+        {
+            return 2 * (10 * level);
+        }
+
+        public void Win()
+        {
+            header = Localization.Parse("{PONG_BEATAI}", new Dictionary<string, string>
+            {
+                ["%amount"] = CalculateAIBeatCP().ToString()
+            });
+            InitializeCoordinates();
+            counterTimer.Stop();
+            new System.Threading.Thread(() =>
+            {
+                doBallCalc = false;
+                for (int i = 3; i > 0; i--)
+                {
+					counter = i.ToString();
+					Engine.AudioManager.PlayStream(Properties.Resources.writesound);
+					System.Threading.Thread.Sleep(1000);
+				}
+                doBallCalc = true;
+                header = "";
+                counter = "";
+                Desktop.InvokeOnWorkerThread(() =>
+                {
+                    counterTimer.Start();
+                });
+            }).Start();
+        }
+
+        public void InitializeCoordinates()
+        {
+            ballX = 0;
+            ballY = 0;
+            opponentY = 0;
+            xVel = 1;
+            aiBallX = 0;
+            aiBallY = 0;
+            aiXVel = xVel;
+            aiYVel = yVel;
+            doAi = true;
+        }
+
+        private bool drawAiBall = false;
+
+        private void pnlcanvas_Paint(object sender, PaintEventArgs e)
         {
 
+            paddleWidth = pnlcanvas.Width / 30;
+            double ballXLocal = linear(ballX, -1.0, 1.0, 0, pnlcanvas.Width);
+            double ballYLocal = linear(ballY, -1.0, 1.0, 0, pnlcanvas.Height);
+
+            ballXLocal -= ((double)paddleWidth / 2);
+            ballYLocal -= ((double)paddleWidth / 2);
+
+            double aiballXLocal = linear(aiBallX, -1.0, 1.0, 0, pnlcanvas.Width);
+            double aiballYLocal = linear(aiBallY, -1.0, 1.0, 0, pnlcanvas.Height);
+
+            aiballXLocal -= ((double)paddleWidth / 2);
+            aiballYLocal -= ((double)paddleWidth / 2);
+
+
+            e.Graphics.Clear(pnlcanvas.BackColor);
+
+            //draw the ai ball
+            if (drawAiBall)
+                e.Graphics.FillEllipse(new SolidBrush(Color.Gray), new RectangleF((float)aiballXLocal, (float)aiballYLocal, (float)paddleWidth, (float)paddleWidth));
+
+
+            //draw the ball
+            if (doBallCalc)
+            e.Graphics.FillEllipse(new SolidBrush(pnlcanvas.ForeColor), new RectangleF((float)ballXLocal, (float)ballYLocal, (float)paddleWidth, (float)paddleWidth));
+
+            double playerYLocal = linear(playerY, -1.0, 1.0, 0, pnlcanvas.Height);
+            double opponentYLocal = linear(opponentY, -1.0, 1.0, 0, pnlcanvas.Height);
+
+            int paddleHeight = pnlcanvas.Height / 5;
+
+            int paddleStart = paddleWidth;
+
+            //draw player paddle
+            e.Graphics.FillRectangle(new SolidBrush(pnlcanvas.ForeColor), new RectangleF((float)paddleWidth, (float)(playerYLocal - (float)(paddleHeight / 2)), (float)paddleWidth, (float)paddleHeight));
+
+            //draw opponent
+            e.Graphics.FillRectangle(new SolidBrush(pnlcanvas.ForeColor), new RectangleF((float)(pnlcanvas.Width - (paddleWidth*2)), (float)(opponentYLocal - (float)(paddleHeight / 2)), (float)paddleWidth, (float)paddleHeight));
+
+            string cp_text = Localization.Parse("{PONG_STATUSCP}", new Dictionary<string, string>
+            {
+                ["%cp"] = codepointsToEarn.ToString()
+            });
+
+            var tSize = e.Graphics.MeasureString(cp_text, SkinEngine.LoadedSkin.Header3Font);
+
+            var tLoc = new PointF((pnlcanvas.Width - (int)tSize.Width) / 2,
+                (pnlcanvas.Height - (int)tSize.Height)
+                
+                );
+            e.Graphics.DrawString(cp_text, SkinEngine.LoadedSkin.Header3Font, new SolidBrush(pnlcanvas.ForeColor), tLoc);
+            tSize = e.Graphics.MeasureString(counter, SkinEngine.LoadedSkin.Header2Font);
+
+            tLoc = new PointF((pnlcanvas.Width - (int)tSize.Width) / 2,
+                (pnlcanvas.Height - (int)tSize.Height) / 2
+
+                );
+            e.Graphics.DrawString(counter, SkinEngine.LoadedSkin.Header2Font, new SolidBrush(pnlcanvas.ForeColor), tLoc);
+            tSize = e.Graphics.MeasureString(header, SkinEngine.LoadedSkin.Header2Font);
+
+            tLoc = new PointF((pnlcanvas.Width - (int)tSize.Width) / 2,
+                (pnlcanvas.Height - (int)tSize.Height) / 4
+
+                );
+            e.Graphics.DrawString(header, SkinEngine.LoadedSkin.Header2Font, new SolidBrush(pnlcanvas.ForeColor), tLoc);
+
+            string l = Localization.Parse("{PONG_STATUSLEVEL}", new Dictionary<string, string>
+            {
+                ["%level"] = level.ToString(),
+                ["%time"] = secondsleft.ToString()
+            });
+            tSize = e.Graphics.MeasureString(l, SkinEngine.LoadedSkin.Header3Font);
+
+            tLoc = new PointF((pnlcanvas.Width - (int)tSize.Width) / 2,
+                (tSize.Height)
+                );
+            e.Graphics.DrawString(l, SkinEngine.LoadedSkin.Header3Font, new SolidBrush(pnlcanvas.ForeColor), tLoc);
+
+
         }
 
-        private void Label8_Click(object sender, EventArgs e)
+        static public double linear(double x, double x0, double x1, double y0, double y1)
         {
-
+            if ((x1 - x0) == 0)
+            {
+                return (y0 + y1) / 2;
+            }
+            return y0 + (x - x0) * (y1 - y0) / (x1 - x0);
         }
 
-        private void pgcontents_Paint(object sender, PaintEventArgs e) {
-
-        }
-
-        private void ball_MouseEnter(object sender, EventArgs e) {
-            aiShouldIsbeEnabled = false;
-        }
-
-        private void ball_MouseLeave(object sender, EventArgs e) {
-            aiShouldIsbeEnabled = true;
-        }
+        Timer drawTimer = null;
 
         public void OnLoad()
         {
+            pnlgamestart.CenterParent();
+            doAi = false;
+            doBallCalc = false;
+            pnlgamestart.Show();
+            pnlgamestart.BringToFront();
+            pnlgamestart.CenterParent();
+            drawTimer.Start();
         }
 
         public void OnSkinLoad()
@@ -640,6 +421,8 @@ namespace ShiftOS.WinForms.Applications
 
         public bool OnUnload()
         {
+            drawTimer.Stop();
+            counterTimer.Stop();
             return true;
         }
 
@@ -647,9 +430,43 @@ namespace ShiftOS.WinForms.Applications
         {
         }
 
+        private void pnlcanvas_MouseMove(object sender, MouseEventArgs e)
+        {
+            playerY = linear(e.Y, 0, pnlcanvas.Height, -1, 1);
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            pnllevelwon.Hide();
+            doAi = true;
+            doBallCalc = true;
+            counterTimer.Start();
+        }
+
+        private void btncashout_Click(object sender, EventArgs e)
+        {
+            pnllevelwon.Hide();
+            SaveSystem.CurrentSave.Codepoints += (ulong)codepointsToEarn;
+            level = 1;
+            speedFactor = 0.0125;
+            Infobox.Show("{TITLE_CODEPOINTSTRANSFERRED}", Localization.Parse("{PROMPT_CODEPOINTSTRANSFERRED}", new Dictionary<string, string>
+            {
+                ["%transferrer"] = "Pong",
+                ["%amount"] = codepointsToEarn.ToString()
+            }));
+            codepointsToEarn = 0;
+            pnlgamestart.Show();
+            pnlgamestart.BringToFront();
+            pnlgamestart.CenterParent();
+
+        }
+
         private void button2_Click(object sender, EventArgs e)
         {
-            pnlhighscore.Hide();
+            counterTimer.Start();
+            doAi = true;
+            doBallCalc = true;
+            pnlgamestart.Hide();
         }
     }
 }

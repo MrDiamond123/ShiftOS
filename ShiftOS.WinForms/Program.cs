@@ -33,85 +33,129 @@ using Newtonsoft.Json;
 using static ShiftOS.Objects.ShiftFS.Utils;
 using ShiftOS.WinForms.Applications;
 using ShiftOS.WinForms.Tools;
+using System.Reflection;
+using System.IO;
 
 namespace ShiftOS.WinForms
 {
-    static class Program
+    public static class Program
     {
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
         [STAThread]
-        static void Main()
+        public static void Main()
         {
-            Localization.RegisterProvider(new WFLanguageProvider());
-            Shiftorium.RegisterProvider(new WinformsShiftoriumProvider());
-            AppearanceManager.OnExit += () =>
-            {
-                Environment.Exit(0);
-            };
-
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+            //if ANYONE puts code before those two winforms config lines they will be declared a drunky. - Michael
+            SkinEngine.SetPostProcessor(new DitheringSkinPostProcessor());
+            LoginManager.Init(new GUILoginFrontend());
+            CrashHandler.SetGameMetadata(Assembly.GetExecutingAssembly());
+            SkinEngine.SetIconProber(new ShiftOSIconProvider());
             TerminalBackend.TerminalRequested += () =>
             {
                 AppearanceManager.SetupWindow(new Applications.Terminal());
             };
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
-            AppearanceManager.Initiate(new WinformsWindowManager());
-            OutOfBoxExperience.Init(new Oobe());
-            Infobox.Init(new WinformsInfobox());
+            Localization.RegisterProvider(new WFLanguageProvider());
+            Infobox.Init(new Dialog());
+            LoginManager.Init(new WinForms.GUILoginFrontend());
             FileSkimmerBackend.Init(new WinformsFSFrontend());
             var desk = new WinformsDesktop();
             Desktop.Init(desk);
+            OutOfBoxExperience.Init(new Oobe());
+            AppearanceManager.Initiate(new WinformsWindowManager());
+#if OLD
+            SaveSystem.PreDigitalSocietyConnection += () =>
+            {
+                Action completed = null;
+                completed = () =>
+                {
+                    SaveSystem.Ready.Set();
+                    Engine.AudioManager.PlayCompleted -= completed;
+                    AudioManager.StartAmbientLoop();
+                };
+                Engine.AudioManager.PlayCompleted += completed;
+                Engine.AudioManager.PlayStream(Properties.Resources.dial_up_modem_02);
+
+            };
+            
             Application.Run(desk);
+#else
+            Application.Run(new MainMenu.MainMenu(desk));
+#endif
         }
     }
 
+    internal class ShiftOSIconProvider : IIconProber
+    {
+        public Image GetIcon(DefaultIconAttribute attr)
+        {
+            
+            var res = typeof(Properties.Resources);
+            foreach(var prop in res.GetProperties(BindingFlags.NonPublic | BindingFlags.Static))
+            {
+                if(prop.PropertyType.BaseType == typeof(Image))
+                {
+                    if(prop.Name == attr.ID)
+                    {
+                        return prop.GetValue(null) as Image;
+                    }
+                }
+            }
+            return new Bitmap(16, 16);
+        }
+    }
+
+    [ShiftoriumProvider]
     internal class WinformsShiftoriumProvider : IShiftoriumProvider
     {
         public List<ShiftoriumUpgrade> GetDefaults()
         {
-            return JsonConvert.DeserializeObject<List<ShiftoriumUpgrade>>(Properties.Resources.Shiftorium);
-        }
-    }
+            var defaultList = JsonConvert.DeserializeObject<List<ShiftoriumUpgrade>>(Properties.Resources.Shiftorium);
 
-    internal class WinformsInfobox : IInfobox
-    {
-        public void Open(string title, string msg)
-        {
-            Dialog frm = new Dialog();
-            frm.Text = title;
-            var pnl = new Panel();
-            var flow = new FlowLayoutPanel();
-            var btnok = new Button();
-            btnok.AutoSize = true;
-            btnok.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-            flow.Height = btnok.Height + 4;
-            btnok.Text = "ok";
-            flow.Dock = DockStyle.Bottom;
-            flow.Controls.Add(btnok);
-            btnok.Show(); btnok.Click += (o, a) =>
+            foreach (var type in ReflectMan.Types)
             {
-                frm.Close();
-            };
-            pnl.Controls.Add(flow);
-            flow.Show();
-            var lbl = new Label();
-            lbl.Text = msg;
-            lbl.TextAlign = ContentAlignment.MiddleCenter;
-            lbl.Dock = DockStyle.Fill;
-            lbl.AutoSize = false;
-            pnl.Controls.Add(lbl); lbl.Show();
-            frm.Controls.Add(pnl);
-            pnl.Dock = DockStyle.Fill;
-            frm.Size = new Size(320, 200);
-            AppearanceManager.SetupDialog(frm);
+                var attribs = type.GetCustomAttributes(false);
+                var attrib = attribs.FirstOrDefault(x => x is AppscapeEntryAttribute) as AppscapeEntryAttribute;
+                if (attrib != null)
+                {
+                    var upgrade = new ShiftoriumUpgrade
+                    {
+                        Id = attrib.Upgrade,
+                        Name = attrib.Name,
+                        Description = attrib.Description,
+                        Cost = attrib.Cost,
+                        Category = attrib.Category,
+                        Dependencies = (string.IsNullOrWhiteSpace(attrib.DependencyString)) ? "appscape_handled_nodisplay" : "appscape_handled_nodisplay;" + attrib.DependencyString
+                    };
+                    defaultList.Add(upgrade);
+                }
 
+                var sattrib = attribs.FirstOrDefault(x => x is StpContents) as StpContents;
+                if (sattrib != null)
+                {
+                    var upgrade = new ShiftoriumUpgrade
+                    {
+                        Id = sattrib.Upgrade,
+                        Name = sattrib.Name,
+                        Description = "This is a hidden dummy upgrade for the .stp file installation attribute \"" + sattrib.Name + "\".",
+                        Cost = 0,
+                        Category = "If this is shown, there's a bug in the Shiftorium Provider or the user is a supreme Shifter.",
+                        Dependencies = "dummy_nodisplay"
+                    };
+                    defaultList.Add(upgrade);
+                }
+
+            }
+            return defaultList;
         }
     }
 
     public class WinformsFSFrontend : IFileSkimmer
     {
+
+
         public void OpenDirectory(string path)
         {
             var fs = new Applications.FileSkimmer();
@@ -141,17 +185,6 @@ namespace ShiftOS.WinForms
                     case FileType.Executable:
                         //NYI
                         throw new Exception();
-                    case FileType.Python:
-                        var p = new Engine.Scripting.PythonInterpreter();
-                        try
-                        {
-                            p.ExecuteFile(path);
-                        }
-                        catch (Exception ex)
-                        {
-                            Infobox.Show("{PY_EXCEPTION}", ex.Message);
-                        }
-                        break;
                     case FileType.Lua:
                         try
                         {
@@ -200,5 +233,35 @@ namespace ShiftOS.WinForms
 
         }
 
+        public Image GetImage(string path)
+        {
+            return Applications.FileSkimmer.GetImage(FileSkimmerBackend.GetFileType(path));
+        }
+
+        public string GetFileExtension(FileType fileType)
+        {
+            switch (fileType)
+            {
+                case FileType.Executable:
+                    return ".saa";
+                case FileType.Filesystem:
+                    return ".mfs";
+                case FileType.Image:
+                    return ".pic";
+                case FileType.JSON:
+                    return ".json";
+                case FileType.Lua:
+                    return ".lua";
+                case FileType.Python:
+                    return ".py";
+                case FileType.Skin:
+                    return ".skn";
+                case FileType.TextFile:
+                    return ".txt";
+                default:
+                    return ".bin";
+
+            }
+        }
     }
 }

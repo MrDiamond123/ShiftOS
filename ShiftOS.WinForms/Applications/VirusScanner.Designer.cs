@@ -1,39 +1,13 @@
-/*
- * MIT License
- * 
- * Copyright (c) 2017 Michael VanOverbeek and ShiftOS devs
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
-
-using ShiftOS.WinForms.Controls;
-
-namespace ShiftOS.WinForms.Applications
+﻿namespace ShiftOS.WinForms.Applications
 {
     partial class VirusScanner
     {
-        /// <summary>
+        /// <summary> 
         /// Required designer variable.
         /// </summary>
         private System.ComponentModel.IContainer components = null;
 
-        /// <summary>
+        /// <summary> 
         /// Clean up any resources being used.
         /// </summary>
         /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
@@ -46,181 +20,283 @@ namespace ShiftOS.WinForms.Applications
             base.Dispose(disposing);
         }
 
-        #region Windows Form Designer generated code
+        #region Component Designer generated code
 
-        /// <summary>
-        /// Required method for Designer support - do not modify
+        /// <summary> 
+        /// Required method for Designer support - do not modify 
         /// the contents of this method with the code editor.
         /// </summary>
         private void InitializeComponent()
         {
-            this.btnfullscan = new System.Windows.Forms.Button();
-            this.btnhomescan = new System.Windows.Forms.Button();
-            this.btnsysscan = new System.Windows.Forms.Button();
-            this.grpresults = new System.Windows.Forms.GroupBox();
-            this.lbviruses = new System.Windows.Forms.ListBox();
-            this.btnremoveviruses = new System.Windows.Forms.Button();
-            this.lblresults = new System.Windows.Forms.Label();
-            this.grpabout = new System.Windows.Forms.GroupBox();
-            this.rtbterm = new TerminalBox();
-            this.lblabout = new System.Windows.Forms.Label();
-            this.pgcontents = new System.Windows.Forms.Panel();
-            this.grpresults.SuspendLayout();
-            this.grpabout.SuspendLayout();
-            this.pgcontents.SuspendLayout();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(VirusScanner));
+            this.pnlsidebar = new System.Windows.Forms.FlowLayoutPanel();
+            this.btnscanfs = new System.Windows.Forms.Button();
+            this.btnscanmem = new System.Windows.Forms.Button();
+            this.btnscanfile = new System.Windows.Forms.Button();
+            this.btnexit = new System.Windows.Forms.Button();
+            this.pnlbody = new System.Windows.Forms.Panel();
+            this.pnlsummary = new System.Windows.Forms.Panel();
+            this.flviruses = new System.Windows.Forms.FlowLayoutPanel();
+            this.label1 = new System.Windows.Forms.Label();
+            this.label3 = new System.Windows.Forms.Label();
+            this.pnlscanner = new System.Windows.Forms.Panel();
+            this.lbscanstatus = new System.Windows.Forms.Label();
+            this.pgscannerprogress = new ShiftOS.WinForms.Controls.ShiftedProgressBar();
+            this.label2 = new System.Windows.Forms.Label();
+            this.pnlintro = new System.Windows.Forms.Panel();
+            this.lbintrotext = new System.Windows.Forms.Label();
+            this.lbintrotitle = new System.Windows.Forms.Label();
+            this.lbstatus = new System.Windows.Forms.Label();
+            this.pnlsidebar.SuspendLayout();
+            this.pnlbody.SuspendLayout();
+            this.pnlsummary.SuspendLayout();
+            this.pnlscanner.SuspendLayout();
+            this.pnlintro.SuspendLayout();
             this.SuspendLayout();
             // 
-            // btnfullscan
+            // pnlsidebar
             // 
-            this.btnfullscan.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnfullscan.Location = new System.Drawing.Point(10, 12);
-            this.btnfullscan.Name = "btnfullscan";
-            this.btnfullscan.Size = new System.Drawing.Size(175, 23);
-            this.btnfullscan.TabIndex = 0;
-            this.btnfullscan.Text = "{START_SYSTEM_SCAN}";
-            this.btnfullscan.UseVisualStyleBackColor = true;
-            this.btnfullscan.Click += new System.EventHandler(this.btnfullscan_Click);
+            this.pnlsidebar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left)));
+            this.pnlsidebar.Controls.Add(this.btnscanfs);
+            this.pnlsidebar.Controls.Add(this.btnscanmem);
+            this.pnlsidebar.Controls.Add(this.btnscanfile);
+            this.pnlsidebar.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
+            this.pnlsidebar.Location = new System.Drawing.Point(4, 4);
+            this.pnlsidebar.Name = "pnlsidebar";
+            this.pnlsidebar.Size = new System.Drawing.Size(138, 399);
+            this.pnlsidebar.TabIndex = 0;
             // 
-            // btnhomescan
+            // btnscanfs
             // 
-            this.btnhomescan.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnhomescan.Location = new System.Drawing.Point(10, 41);
-            this.btnhomescan.Name = "btnhomescan";
-            this.btnhomescan.Size = new System.Drawing.Size(175, 23);
-            this.btnhomescan.TabIndex = 1;
-            this.btnhomescan.Text = "{SCAN_HOME}";
-            this.btnhomescan.UseVisualStyleBackColor = true;
-            this.btnhomescan.Click += new System.EventHandler(this.btnhomescan_Click);
+            this.btnscanfs.Location = new System.Drawing.Point(3, 3);
+            this.btnscanfs.Name = "btnscanfs";
+            this.btnscanfs.Size = new System.Drawing.Size(135, 23);
+            this.btnscanfs.TabIndex = 0;
+            this.btnscanfs.Text = "Scan filesystem";
+            this.btnscanfs.UseVisualStyleBackColor = true;
+            this.btnscanfs.Click += new System.EventHandler(this.btnscanfs_Click);
             // 
-            // btnsysscan
+            // btnscanmem
             // 
-            this.btnsysscan.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnsysscan.Location = new System.Drawing.Point(10, 70);
-            this.btnsysscan.Name = "btnsysscan";
-            this.btnsysscan.Size = new System.Drawing.Size(175, 23);
-            this.btnsysscan.TabIndex = 2;
-            this.btnsysscan.Text = "{SCAN_SYSTEM}";
-            this.btnsysscan.UseVisualStyleBackColor = true;
-            this.btnsysscan.Click += new System.EventHandler(this.btnsysscan_Click);
+            this.btnscanmem.Location = new System.Drawing.Point(3, 32);
+            this.btnscanmem.Name = "btnscanmem";
+            this.btnscanmem.Size = new System.Drawing.Size(135, 23);
+            this.btnscanmem.TabIndex = 1;
+            this.btnscanmem.Text = "Scan memory";
+            this.btnscanmem.UseVisualStyleBackColor = true;
+            this.btnscanmem.Click += new System.EventHandler(this.btnscanmem_Click);
             // 
-            // grpresults
+            // btnscanfile
             // 
-            this.grpresults.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.grpresults.Controls.Add(this.lbviruses);
-            this.grpresults.Controls.Add(this.btnremoveviruses);
-            this.grpresults.Controls.Add(this.lblresults);
-            this.grpresults.Location = new System.Drawing.Point(3, 168);
-            this.grpresults.Name = "grpresults";
-            this.grpresults.Size = new System.Drawing.Size(179, 158);
-            this.grpresults.TabIndex = 3;
-            this.grpresults.TabStop = false;
-            this.grpresults.Text = "{RESULTS}";
+            this.btnscanfile.Location = new System.Drawing.Point(3, 61);
+            this.btnscanfile.Name = "btnscanfile";
+            this.btnscanfile.Size = new System.Drawing.Size(135, 23);
+            this.btnscanfile.TabIndex = 2;
+            this.btnscanfile.Text = "Scan file";
+            this.btnscanfile.UseVisualStyleBackColor = true;
+            this.btnscanfile.Click += new System.EventHandler(this.btnscanfile_Click);
             // 
-            // lbviruses
+            // btnexit
             // 
-            this.lbviruses.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.lbviruses.FormattingEnabled = true;
-            this.lbviruses.Location = new System.Drawing.Point(3, 16);
-            this.lbviruses.Name = "lbviruses";
-            this.lbviruses.Size = new System.Drawing.Size(173, 116);
-            this.lbviruses.TabIndex = 2;
+            this.btnexit.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.btnexit.Location = new System.Drawing.Point(7, 409);
+            this.btnexit.Name = "btnexit";
+            this.btnexit.Size = new System.Drawing.Size(135, 23);
+            this.btnexit.TabIndex = 1;
+            this.btnexit.Text = "Exit";
+            this.btnexit.UseVisualStyleBackColor = true;
+            this.btnexit.Click += new System.EventHandler(this.btnexit_Click);
             // 
-            // btnremoveviruses
+            // pnlbody
             // 
-            this.btnremoveviruses.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.btnremoveviruses.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnremoveviruses.Location = new System.Drawing.Point(3, 132);
-            this.btnremoveviruses.Name = "btnremoveviruses";
-            this.btnremoveviruses.Size = new System.Drawing.Size(173, 23);
-            this.btnremoveviruses.TabIndex = 1;
-            this.btnremoveviruses.Text = "Remove";
-            this.btnremoveviruses.UseVisualStyleBackColor = true;
-            this.btnremoveviruses.Visible = false;
-            this.btnremoveviruses.Click += new System.EventHandler(this.btnremoveviruses_Click);
-            // 
-            // lblresults
-            // 
-            this.lblresults.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.lblresults.Location = new System.Drawing.Point(3, 16);
-            this.lblresults.Name = "lblresults";
-            this.lblresults.Size = new System.Drawing.Size(173, 139);
-            this.lblresults.TabIndex = 0;
-            this.lblresults.Text = "{SCAN_NOT_STARTED}";
-            // 
-            // grpabout
-            // 
-            this.grpabout.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            this.pnlbody.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.grpabout.Controls.Add(this.rtbterm);
-            this.grpabout.Controls.Add(this.lblabout);
-            this.grpabout.Location = new System.Drawing.Point(191, 12);
-            this.grpabout.Name = "grpabout";
-            this.grpabout.Size = new System.Drawing.Size(362, 314);
-            this.grpabout.TabIndex = 5;
-            this.grpabout.TabStop = false;
-            this.grpabout.Text = "{ABOUT}";
+            this.pnlbody.Controls.Add(this.pnlsummary);
+            this.pnlbody.Controls.Add(this.pnlscanner);
+            this.pnlbody.Controls.Add(this.pnlintro);
+            this.pnlbody.Location = new System.Drawing.Point(149, 4);
+            this.pnlbody.Name = "pnlbody";
+            this.pnlbody.Size = new System.Drawing.Size(498, 399);
+            this.pnlbody.TabIndex = 2;
             // 
-            // rtbterm
+            // pnlsummary
             // 
-            this.rtbterm.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.rtbterm.Location = new System.Drawing.Point(3, 16);
-            this.rtbterm.Name = "rtbterm";
-            this.rtbterm.Size = new System.Drawing.Size(356, 295);
-            this.rtbterm.TabIndex = 1;
-            this.rtbterm.Text = "";
+            this.pnlsummary.Controls.Add(this.flviruses);
+            this.pnlsummary.Controls.Add(this.label1);
+            this.pnlsummary.Controls.Add(this.label3);
+            this.pnlsummary.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.pnlsummary.Location = new System.Drawing.Point(0, 0);
+            this.pnlsummary.Name = "pnlsummary";
+            this.pnlsummary.Size = new System.Drawing.Size(498, 399);
+            this.pnlsummary.TabIndex = 3;
             // 
-            // lblabout
+            // flviruses
             // 
-            this.lblabout.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.lblabout.Location = new System.Drawing.Point(3, 16);
-            this.lblabout.Name = "lblabout";
-            this.lblabout.Size = new System.Drawing.Size(356, 295);
-            this.lblabout.TabIndex = 0;
-            this.lblabout.Text = "{VIRUSSCANNER_ABOUT}";
+            this.flviruses.AutoScroll = true;
+            this.flviruses.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.flviruses.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
+            this.flviruses.Location = new System.Drawing.Point(0, 66);
+            this.flviruses.Margin = new System.Windows.Forms.Padding(0);
+            this.flviruses.Name = "flviruses";
+            this.flviruses.Padding = new System.Windows.Forms.Padding(10);
+            this.flviruses.Size = new System.Drawing.Size(498, 333);
+            this.flviruses.TabIndex = 3;
             // 
-            // pgcontents
+            // label1
             // 
-            this.pgcontents.BackColor = System.Drawing.Color.White;
-            this.pgcontents.Controls.Add(this.grpabout);
-            this.pgcontents.Controls.Add(this.grpresults);
-            this.pgcontents.Controls.Add(this.btnsysscan);
-            this.pgcontents.Controls.Add(this.btnhomescan);
-            this.pgcontents.Controls.Add(this.btnfullscan);
-            this.pgcontents.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.pgcontents.Location = new System.Drawing.Point(0, 0);
-            this.pgcontents.Name = "pgcontents";
-            this.pgcontents.Size = new System.Drawing.Size(565, 343);
-            this.pgcontents.TabIndex = 25;
+            this.label1.AutoSize = true;
+            this.label1.Dock = System.Windows.Forms.DockStyle.Top;
+            this.label1.Location = new System.Drawing.Point(0, 33);
+            this.label1.Name = "label1";
+            this.label1.Padding = new System.Windows.Forms.Padding(10);
+            this.label1.Size = new System.Drawing.Size(184, 33);
+            this.label1.TabIndex = 2;
+            this.label1.Text = "Below is a list of all viruses found.";
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Dock = System.Windows.Forms.DockStyle.Top;
+            this.label3.Location = new System.Drawing.Point(0, 0);
+            this.label3.Name = "label3";
+            this.label3.Padding = new System.Windows.Forms.Padding(10);
+            this.label3.Size = new System.Drawing.Size(101, 33);
+            this.label3.TabIndex = 0;
+            this.label3.Tag = "header3";
+            this.label3.Text = "Scan complete.";
+            // 
+            // pnlscanner
+            // 
+            this.pnlscanner.Controls.Add(this.lbscanstatus);
+            this.pnlscanner.Controls.Add(this.pgscannerprogress);
+            this.pnlscanner.Controls.Add(this.label2);
+            this.pnlscanner.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.pnlscanner.Location = new System.Drawing.Point(0, 0);
+            this.pnlscanner.Name = "pnlscanner";
+            this.pnlscanner.Size = new System.Drawing.Size(498, 399);
+            this.pnlscanner.TabIndex = 2;
+            // 
+            // lbscanstatus
+            // 
+            this.lbscanstatus.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.lbscanstatus.Location = new System.Drawing.Point(0, 33);
+            this.lbscanstatus.Name = "lbscanstatus";
+            this.lbscanstatus.Padding = new System.Windows.Forms.Padding(10);
+            this.lbscanstatus.Size = new System.Drawing.Size(498, 343);
+            this.lbscanstatus.TabIndex = 2;
+            this.lbscanstatus.Text = "label1";
+            // 
+            // pgscannerprogress
+            // 
+            this.pgscannerprogress.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.pgscannerprogress.Location = new System.Drawing.Point(0, 376);
+            this.pgscannerprogress.Maximum = 100;
+            this.pgscannerprogress.Name = "pgscannerprogress";
+            this.pgscannerprogress.Padding = new System.Windows.Forms.Padding(10);
+            this.pgscannerprogress.Size = new System.Drawing.Size(498, 23);
+            this.pgscannerprogress.TabIndex = 1;
+            this.pgscannerprogress.Text = "shiftedProgressBar1";
+            this.pgscannerprogress.Value = 0;
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Dock = System.Windows.Forms.DockStyle.Top;
+            this.label2.Location = new System.Drawing.Point(0, 0);
+            this.label2.Name = "label2";
+            this.label2.Padding = new System.Windows.Forms.Padding(10);
+            this.label2.Size = new System.Drawing.Size(81, 33);
+            this.label2.TabIndex = 0;
+            this.label2.Tag = "header3";
+            this.label2.Text = "Scanning...";
+            // 
+            // pnlintro
+            // 
+            this.pnlintro.Controls.Add(this.lbintrotext);
+            this.pnlintro.Controls.Add(this.lbintrotitle);
+            this.pnlintro.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.pnlintro.Location = new System.Drawing.Point(0, 0);
+            this.pnlintro.Name = "pnlintro";
+            this.pnlintro.Size = new System.Drawing.Size(498, 399);
+            this.pnlintro.TabIndex = 0;
+            // 
+            // lbintrotext
+            // 
+            this.lbintrotext.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.lbintrotext.Location = new System.Drawing.Point(0, 33);
+            this.lbintrotext.Name = "lbintrotext";
+            this.lbintrotext.Padding = new System.Windows.Forms.Padding(10);
+            this.lbintrotext.Size = new System.Drawing.Size(498, 366);
+            this.lbintrotext.TabIndex = 1;
+            this.lbintrotext.Tag = "";
+            this.lbintrotext.Text = resources.GetString("lbintrotext.Text");
+            // 
+            // lbintrotitle
+            // 
+            this.lbintrotitle.AutoSize = true;
+            this.lbintrotitle.Dock = System.Windows.Forms.DockStyle.Top;
+            this.lbintrotitle.Location = new System.Drawing.Point(0, 0);
+            this.lbintrotitle.Name = "lbintrotitle";
+            this.lbintrotitle.Padding = new System.Windows.Forms.Padding(10);
+            this.lbintrotitle.Size = new System.Drawing.Size(93, 33);
+            this.lbintrotitle.TabIndex = 0;
+            this.lbintrotitle.Tag = "header3";
+            this.lbintrotitle.Text = "Virus Scanner";
+            // 
+            // lbstatus
+            // 
+            this.lbstatus.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.lbstatus.AutoSize = true;
+            this.lbstatus.Location = new System.Drawing.Point(152, 410);
+            this.lbstatus.Name = "lbstatus";
+            this.lbstatus.Size = new System.Drawing.Size(48, 13);
+            this.lbstatus.TabIndex = 3;
+            this.lbstatus.Text = "Grade: 1";
             // 
             // VirusScanner
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.Controls.Add(this.pgcontents);
+            this.Controls.Add(this.lbstatus);
+            this.Controls.Add(this.pnlbody);
+            this.Controls.Add(this.btnexit);
+            this.Controls.Add(this.pnlsidebar);
             this.Name = "VirusScanner";
-            this.Text = "{VIRUS_SCANNER_NAME}";
-            this.Size = new System.Drawing.Size(565, 343);
-            this.Load += new System.EventHandler(this.VirusScanner_Load);
-            this.grpresults.ResumeLayout(false);
-            this.grpabout.ResumeLayout(false);
-            this.pgcontents.ResumeLayout(false);
+            this.Size = new System.Drawing.Size(650, 435);
+            this.pnlsidebar.ResumeLayout(false);
+            this.pnlbody.ResumeLayout(false);
+            this.pnlsummary.ResumeLayout(false);
+            this.pnlsummary.PerformLayout();
+            this.pnlscanner.ResumeLayout(false);
+            this.pnlscanner.PerformLayout();
+            this.pnlintro.ResumeLayout(false);
+            this.pnlintro.PerformLayout();
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
         #endregion
 
-        internal System.Windows.Forms.Button btnfullscan;
-        internal System.Windows.Forms.Button btnhomescan;
-        internal System.Windows.Forms.Button btnsysscan;
-        internal System.Windows.Forms.GroupBox grpresults;
-        internal System.Windows.Forms.Button btnremoveviruses;
-        internal System.Windows.Forms.Label lblresults;
-        internal System.Windows.Forms.GroupBox grpabout;
-        internal System.Windows.Forms.Label lblabout;
-        internal System.Windows.Forms.Panel pgcontents;
-        private TerminalBox rtbterm;
-        private System.Windows.Forms.ListBox lbviruses;
+        private System.Windows.Forms.FlowLayoutPanel pnlsidebar;
+        private System.Windows.Forms.Button btnscanfs;
+        private System.Windows.Forms.Button btnscanmem;
+        private System.Windows.Forms.Button btnscanfile;
+        private System.Windows.Forms.Button btnexit;
+        private System.Windows.Forms.Panel pnlbody;
+        private System.Windows.Forms.Panel pnlintro;
+        private System.Windows.Forms.Label lbintrotext;
+        private System.Windows.Forms.Label lbintrotitle;
+        private System.Windows.Forms.Label lbstatus;
+        private System.Windows.Forms.Panel pnlscanner;
+        private System.Windows.Forms.Label lbscanstatus;
+        private Controls.ShiftedProgressBar pgscannerprogress;
+        private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.Panel pnlsummary;
+        private System.Windows.Forms.FlowLayoutPanel flviruses;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Label label3;
     }
 }

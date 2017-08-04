@@ -1,3 +1,10 @@
+/*
+ * THIS IS AN EXAMPLE FILE
+ *
+ * Any Shiftorium upgrades placed in here won't be recognized by the main ShiftOS frontend
+ * (ShiftOS.WinForms). It uses its own Shiftorium definition file found in its Resources.
+ */
+
 [
 	{
 		Name: "MUD Fundamentals",
@@ -29,6 +36,11 @@
 		Description: "Sometimes it's useful to have a list of windows that are open on your system so you can easily switch between them.",
 		Dependencies: "desktop;wm_unlimited_windows"
 	},
+	{ 
+		Name: "Audio volume",
+		Cost: 80,
+		Description: "Allows you to change the system music volume"
+	},
 	{
 		Name: "AL Skin Loader",
 		Cost: 125,
@@ -48,28 +60,10 @@
 		Dependencies: "textpad;file_skimmer",
 	},
 	{
-		Name: "TextPad Python Support",
-		Cost: 450,
-		Description: "Use TextPad to write Python scripts!",
-		Dependencies: "textpad;file_skimmer",	
-	},
-	{
 		Name: "App Launcher",
 		Cost: 10000,
 		Description: "It may be expensive, but having an easy-access menu to all your apps is very valuable.",
 		Dependencies:"desktop;wm_unlimited_windows"
-	},
-	{
-		Name: "MUD Cracker",
-		Cost: 500,
-		Description: "An application for cracking the current multi-user domain's admin password.",
-		Dependencies: "mud_fundamentals"
-	},
-	{
-		Name: "AL MUD Cracker",
-		Cost: 100,
-		Description: "Add a launcher item for the MUD cracker.",
-		Dependencies: "mud_cracker;app_launcher"
 	},
 	{
 		Name: "Textpad",
@@ -261,18 +255,6 @@
 		Cost: 10000,
 		Description: "So you lost in pong, it must be sad to lose all the codepoints you've gained. With this upgrade you can save 1 percent of the loss, so at least you get something for losing!",
 		Dependencies: "mud_fundamentals;window_manager;pong_upgrade"
-	},
-	{
-		Name: "WAV Player",
-		Cost: 10000,
-		Description: "Want to listen to the greatest tunes? Well get this app asap!",
-		Dependencies: "desktop;wm_free_placement"
-	},
-	{
-		Name: "WAV Player AL",
-		Cost: 300,
-		Description: "Just another app launcher, making it easier to listen to your favorite songs!",
-		Dependencies: "desktop;wm_free_placement;wav_player"
 	},
 
 	//SHIFTER SUBCATEGORIES
@@ -589,6 +571,26 @@
        Cost: 2500,
        Dependencies: "shiftorium_gui",
        Description: "In the shiftorium GUI but dont know what you can spend because you can't see how many code points are on hand? Well shop easy, because with this upgrade that is now possible! You have to restart the shiftorium for it to work."
-    }
+    },
 	
+
+	// CALCULATOR UPGRADES
+	{
+		Name: "Calculator",
+		Cost: 1000,
+		Dependencies: "wm_free_placement;desktop",
+		Description: "Crazy math problems getting you down? Well, this calculator will take care of that!"
+	},
+	{
+		Name: "AL Calculator",
+		Cost: 350,
+		Dependencies: "calculator;app_launcher",
+		Description: "Add an App Launcher Entry for the Calculator!"
+	},
+	{
+		Name: "Calc Equals Button",
+		Cost: 600,
+		Dependencies: "calculator",
+		Description: "Right now, you can only type numbers, but this equals button opens the door to solving equations!"
+	}
 ]

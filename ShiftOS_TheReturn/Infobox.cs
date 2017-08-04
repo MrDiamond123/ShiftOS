@@ -55,11 +55,36 @@ namespace ShiftOS.Engine
         /// </summary>
         /// <param name="title">Infobox title</param>
         /// <param name="message">Infobox message</param>
-        public static void Show(string title, string message)
+        public static void Show(string title, string message, Action callback = null)
         {
-            _infobox.Open(title, message);
+            title = Localization.Parse(title);
+            message = Localization.Parse(message);
+            Desktop.InvokeOnWorkerThread(() =>
+            {
+                _infobox.Open(title, message, callback);
+            });
         }
-        
+
+        public static void PromptText(string title, string message, Action<string> callback, bool isPassword = false)
+        {
+            title = Localization.Parse(title);
+            message = Localization.Parse(message);
+            Desktop.InvokeOnWorkerThread(() =>
+            {
+                _infobox.PromptText(title, message, callback, isPassword);
+            });
+        }
+
+        public static void PromptYesNo(string title, string message, Action<bool> callback)
+        {
+            title = Localization.Parse(title);
+            message = Localization.Parse(message);
+            Desktop.InvokeOnWorkerThread(() =>
+            {
+                _infobox.PromptYesNo(title, message, callback);
+            });
+        }
+
         /// <summary>
         /// Inits an infobox
         /// </summary>
@@ -73,6 +98,8 @@ namespace ShiftOS.Engine
     // Infobox Interface
     public interface IInfobox
     {
-        void Open(string title, string msg);
+        void Open(string title, string msg, Action callback = null);
+        void PromptText(string title, string message, Action<string> callback, bool isPassword);
+        void PromptYesNo(string title, string message, Action<bool> callback);
     }
 }

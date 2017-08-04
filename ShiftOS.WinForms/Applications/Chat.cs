@@ -33,63 +33,85 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using Newtonsoft.Json;
 using ShiftOS.Engine;
+using System.Threading;
 
 namespace ShiftOS.WinForms.Applications
 {
     [MultiplayerOnly]
-    [Launcher("MUD Chat", true, "al_mud_chat")]
-    [RequiresUpgrade("mud_fundamentals")]
-    [WinOpen("chat")]
+    [WinOpen("{WO_SIMPLESRC}")]
+    [Launcher("{TITLE_SIMPLESRC}", false, null, "{AL_NETWORKING}")]
+    [DefaultTitle("{TITLE_SIMPLESRC}")]
+    [AppscapeEntry("simplesrc_client", "{TITLE_SIMPLESRC}", "{DESC_SIMPLESRC}", 300, 145, "file_skimmer", "{AL_NETWORKING}")]
     public partial class Chat : UserControl, IShiftOSWindow
     {
-        public Chat(string chatId)
+        public Chat()
         {
             InitializeComponent();
-            id = chatId;
-            ServerManager.MessageReceived += (msg) =>
-            {
-                if (msg.Name == "cbroadcast")
-                {
-                    try
-                    {
-                        this.Invoke(new Action(() =>
-                        {
-                            rtbchat.Text += msg.Contents + Environment.NewLine;
-                        }));
-                    }
-                    catch { }
-                }
-            };
         }
 
-        private string id = "";
+        public event Action<ShiftOS.Objects.ShiftFS.File> FileSent;
+
+        public string Typing
+        {
+            get
+            {
+                return lbtyping.Text;
+            }
+            set
+            {
+                this.Invoke(new Action(() =>
+                {
+                    if (string.IsNullOrWhiteSpace(value))
+                    {
+                        lbtyping.Visible = false;
+                    }
+                    else
+                    {
+                        lbtyping.Text = value + " is typing...";
+                        lbtyping.Visible = true;
+                    }
+                }));
+            }
+        }
+
+        public void ShowChat()
+        {
+            this.Invoke(new Action(() =>
+            {
+                pnlstart.Hide();
+                rtbchat.Show();
+                rtbchat.BringToFront();
+            }));
+        }
 
         public void OnLoad()
         {
-            var save = SaveSystem.CurrentSave;
-            ServerManager.SendMessage("chat_join", $@"{{
-    id: ""{id}"",
-    user: {JsonConvert.SerializeObject(save)}
-}}");
+            AllInstances.Add(this);
+            if (!string.IsNullOrWhiteSpace(ChatID))
+                pnlstart.SendToBack();
+            RefreshUserInput();
         }
 
         public void OnSkinLoad()
         {
+            RefreshUserInput();
         }
 
         public bool OnUnload()
         {
-            var save = SaveSystem.CurrentSave;
-            ServerManager.SendMessage("chat_leave", $@"{{
-    id: ""{id}"",
-    user: {JsonConvert.SerializeObject(save)}
-}}");
-
+            AllInstances.Remove(this);
+            ChatID = null;
             return true;
         }
 
         public void OnUpgrade()
         {
+            RefreshUserInput();
+        }
+
+        public void RefreshUserInput()
+        {
+            txtuserinput.Width = (tsbottombar.Width) - (btnsend.Width) - 15;
         }
 
         private void richTextBox1_KeyDown(object sender, KeyEventArgs e)
@@ -99,19 +121,66 @@ namespace ShiftOS.WinForms.Applications
 
         private void txtuserinput_KeyDown(object sender, KeyEventArgs e)
         {
-            if(e.KeyCode == Keys.Enter)
+            if (e.KeyCode == Keys.Enter)
             {
                 e.SuppressKeyPress = true;
 
-                var save = SaveSystem.CurrentSave;
-
-                ServerManager.SendMessage("chat", $@"{{
-    id: ""{id}"",
-    user: {JsonConvert.SerializeObject(save)},
-    msg: ""{txtuserinput.Text}""
-}}");
-                txtuserinput.Text = "";
+                btnsend_Click(sender, EventArgs.Empty);
             }
+        }
+
+        private void rtbchat_TextChanged(object sender, EventArgs e)
+        {
+            rtbchat.SelectionStart = rtbchat.Text.Length;
+            rtbchat.ScrollToCaret();
+            tschatid.Text = ChatID;
+            AppearanceManager.SetWindowTitle(this, tschatid.Text + " - SimpleSRC Client");
+            tsuserdata.Text = $"{SaveSystem.CurrentUser.Username}@{SaveSystem.CurrentSave.SystemName}";
+            RefreshUserInput();
+        }
+
+        public static readonly List<Chat> AllInstances = new List<Chat>();
+
+        public static void SendMessage(string user, string destination, string msg)
+        {
+            foreach (var chat in AllInstances)
+            {
+                chat.PostMessage(user, destination, msg);
+            }
+        }
+
+        public string ChatID = "";
+
+        public void PostMessage(string user, string destination, string message)
+        {
+            if (ChatID == destination)
+            {
+                this.Invoke(new Action(() =>
+                {
+                    rtbchat.SelectionFont = new Font(rtbchat.Font, FontStyle.Bold);
+                    rtbchat.AppendText($"[{user}] ");
+                    rtbchat.SelectionFont = rtbchat.Font;
+                    rtbchat.AppendText(message);
+                    rtbchat.AppendText(Environment.NewLine + Environment.NewLine);
+                }));
+            }
+        }
+
+        private void btnsend_Click(object sender, EventArgs e)
+        {
+            //Update ALL chat windows with this message if they're connected to this chat.
+            SendMessage($"{SaveSystem.CurrentUser.Username}@{SaveSystem.CurrentSave.SystemName}", ChatID, txtuserinput.Text);
+            txtuserinput.Text = "";
+        }
+
+        private void btnsendfile_Click(object sender, EventArgs e)
+        {
+            FileSkimmerBackend.GetFile(new[] { "" }, FileOpenerStyle.Open, (file) =>
+            {
+                var finf = ShiftOS.Objects.ShiftFS.Utils.GetFileInfo(file);
+                PostMessage($"{SaveSystem.CurrentUser.Username}@{SaveSystem.CurrentSave.SystemName}", ChatID, "<user sent a file: " + finf.Name + ">");
+                FileSent?.Invoke(finf);
+            });
         }
     }
 }

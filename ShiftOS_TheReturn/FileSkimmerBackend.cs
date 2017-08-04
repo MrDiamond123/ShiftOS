@@ -46,14 +46,20 @@ namespace ShiftOS.Engine
         /// <param name="path">The path to open.</param>
         public static void OpenFile(string path)
         {
-            _fs.OpenFile(path);
+            if (!Objects.ShiftFS.Utils.FileExists(path))
+                throw new System.IO.FileNotFoundException("ShiftFS could not find the file specified.", path);
+            foreach (var type in ReflectMan.Types.Where(x => x.GetInterfaces().Contains(typeof(IFileHandler)) && Shiftorium.UpgradeAttributesUnlocked(x)))
+            {
+                foreach(FileHandlerAttribute attrib in type.GetCustomAttributes(false).Where(x => x is FileHandlerAttribute))
+                {
+                    if (path.ToLower().EndsWith(attrib.Extension))
+                    {
+                        var obj = (IFileHandler)Activator.CreateInstance(type);
+                        obj.OpenFile(path);
+                    }
+                }
+            }
         }
-
-        /// <summary>
-        /// Gets the file type of a given path.
-        /// </summary>
-        /// <param name="path">The path to check</param>
-        /// <returns>The FileType of the path</returns>
         public static FileType GetFileType(string path)
         {
             
@@ -94,6 +100,8 @@ namespace ShiftOS.Engine
                 //No, not "sex" - ShiftOS EXecutable. xD
                 case "sex":
                     return FileType.Executable;
+                case "cf":
+                    return FileType.CommandFormat;
                 default:
                     return FileType.Unknown;
             }
@@ -131,7 +139,12 @@ namespace ShiftOS.Engine
 
         public static System.Drawing.Image GetImage(string filepath)
         {
-            return new Bitmap(42, 42);
+            return _fs.GetImage(filepath);
+        }
+
+        public static string GetFileExtension(FileType fileType)
+        {
+            return _fs.GetFileExtension(fileType);
         }
     }
 
@@ -143,6 +156,8 @@ namespace ShiftOS.Engine
         void OpenFile(string filepath);
         void GetPath(string[] filetypes, FileOpenerStyle style, Action<string> callback);
         void OpenDirectory(string path);
+        Image GetImage(string path);
+        string GetFileExtension(FileType fileType);
     }
 
 
@@ -171,6 +186,7 @@ namespace ShiftOS.Engine
         Lua,
         Python,
         Filesystem,
+        CommandFormat,
         Unknown
     }
 }

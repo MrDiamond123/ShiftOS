@@ -117,4 +117,9 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="lbintrotext.Text" xml:space="preserve">
+    <value>Virus Scanner is a small utility application that allows you to scan files and the system RAM for viral infections.
+
+To start a scan, click one of the buttons to the left. Wait for the scan to complete, and then we'll list any threats we find. If we find a threat, you can click "Disinfect" to remove the virus from your system.</value>
+  </data>
 </root>

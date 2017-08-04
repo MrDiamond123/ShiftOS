@@ -53,46 +53,46 @@ namespace ShiftOS.WinForms.Applications
         private void InitializeComponent()
         {
             this.pnldesktop = new System.Windows.Forms.Panel();
-            this.pnlborder = new System.Windows.Forms.Panel();
-            this.flbuttons = new System.Windows.Forms.FlowLayoutPanel();
-            this.btnclose = new System.Windows.Forms.Button();
-            this.btnloaddefault = new System.Windows.Forms.Button();
-            this.btnexport = new System.Windows.Forms.Button();
-            this.btnimport = new System.Windows.Forms.Button();
-            this.btnapply = new System.Windows.Forms.Button();
             this.desktoppanel = new System.Windows.Forms.Panel();
             this.sysmenuholder = new System.Windows.Forms.Panel();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.apps = new System.Windows.Forms.ToolStripMenuItem();
-            this.lbtime = new System.Windows.Forms.Label();
             this.item1ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.item2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.item3ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.item4ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+            this.item4ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.lbtime = new System.Windows.Forms.Label();
+            this.pnlborder = new System.Windows.Forms.Panel();
             this.pnlcontents = new System.Windows.Forms.Panel();
-            this.pnltitle = new System.Windows.Forms.Panel();
-            this.pnlminimize = new System.Windows.Forms.Panel();
-            this.pnlmaximize = new System.Windows.Forms.Panel();
-            this.pnlclose = new System.Windows.Forms.Panel();
-            this.lbtitletext = new System.Windows.Forms.Label();
             this.pnlbottom = new System.Windows.Forms.Panel();
             this.pnlbottomr = new System.Windows.Forms.Panel();
             this.pnlbottoml = new System.Windows.Forms.Panel();
             this.pnlright = new System.Windows.Forms.Panel();
             this.pnlleft = new System.Windows.Forms.Panel();
             this.pnltitlemaster = new System.Windows.Forms.Panel();
+            this.pnltitle = new System.Windows.Forms.Panel();
+            this.pnlminimize = new System.Windows.Forms.Panel();
+            this.pnlmaximize = new System.Windows.Forms.Panel();
+            this.pnlclose = new System.Windows.Forms.Panel();
+            this.lbtitletext = new System.Windows.Forms.Label();
             this.pnltitleright = new System.Windows.Forms.Panel();
             this.pnltitleleft = new System.Windows.Forms.Panel();
+            this.flbuttons = new System.Windows.Forms.FlowLayoutPanel();
+            this.btnclose = new System.Windows.Forms.Button();
+            this.btnloaddefault = new System.Windows.Forms.Button();
+            this.btnexport = new System.Windows.Forms.Button();
+            this.btnimport = new System.Windows.Forms.Button();
+            this.btnapply = new System.Windows.Forms.Button();
             this.pnldesktop.SuspendLayout();
-            this.pnlborder.SuspendLayout();
-            this.flbuttons.SuspendLayout();
             this.desktoppanel.SuspendLayout();
             this.sysmenuholder.SuspendLayout();
             this.menuStrip1.SuspendLayout();
-            this.pnltitle.SuspendLayout();
+            this.pnlborder.SuspendLayout();
             this.pnlbottom.SuspendLayout();
             this.pnltitlemaster.SuspendLayout();
+            this.pnltitle.SuspendLayout();
+            this.flbuttons.SuspendLayout();
             this.SuspendLayout();
             // 
             // pnldesktop
@@ -103,95 +103,6 @@ namespace ShiftOS.WinForms.Applications
             this.pnldesktop.Name = "pnldesktop";
             this.pnldesktop.Size = new System.Drawing.Size(522, 251);
             this.pnldesktop.TabIndex = 0;
-            // 
-            // pnlborder
-            // 
-            this.pnlborder.BackColor = System.Drawing.Color.Black;
-            this.pnlborder.Controls.Add(this.pnlcontents);
-            this.pnlborder.Controls.Add(this.pnlbottom);
-            this.pnlborder.Controls.Add(this.pnlright);
-            this.pnlborder.Controls.Add(this.pnlleft);
-            this.pnlborder.Controls.Add(this.pnltitlemaster);
-            this.pnlborder.Location = new System.Drawing.Point(12, 270);
-            this.pnlborder.Name = "pnlborder";
-            this.pnlborder.Size = new System.Drawing.Size(522, 251);
-            this.pnlborder.TabIndex = 1;
-            // 
-            // flbuttons
-            // 
-            this.flbuttons.AutoSize = true;
-            this.flbuttons.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.flbuttons.Controls.Add(this.btnclose);
-            this.flbuttons.Controls.Add(this.btnloaddefault);
-            this.flbuttons.Controls.Add(this.btnexport);
-            this.flbuttons.Controls.Add(this.btnimport);
-            this.flbuttons.Controls.Add(this.btnapply);
-            this.flbuttons.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.flbuttons.Location = new System.Drawing.Point(0, 629);
-            this.flbuttons.Name = "flbuttons";
-            this.flbuttons.Size = new System.Drawing.Size(547, 29);
-            this.flbuttons.TabIndex = 2;
-            // 
-            // btnclose
-            // 
-            this.btnclose.AutoSize = true;
-            this.btnclose.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.btnclose.Location = new System.Drawing.Point(3, 3);
-            this.btnclose.Name = "btnclose";
-            this.btnclose.Size = new System.Drawing.Size(60, 23);
-            this.btnclose.TabIndex = 0;
-            this.btnclose.Text = "{CLOSE}";
-            this.btnclose.UseVisualStyleBackColor = true;
-            this.btnclose.Click += new System.EventHandler(this.btnclose_Click);
-            // 
-            // btnloaddefault
-            // 
-            this.btnloaddefault.AccessibleRole = System.Windows.Forms.AccessibleRole.None;
-            this.btnloaddefault.AutoSize = true;
-            this.btnloaddefault.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.btnloaddefault.Location = new System.Drawing.Point(69, 3);
-            this.btnloaddefault.Name = "btnloaddefault";
-            this.btnloaddefault.Size = new System.Drawing.Size(109, 23);
-            this.btnloaddefault.TabIndex = 1;
-            this.btnloaddefault.Text = "{LOAD_DEFAULT}";
-            this.btnloaddefault.UseVisualStyleBackColor = true;
-            this.btnloaddefault.Click += new System.EventHandler(this.btnloaddefault_Click);
-            // 
-            // btnexport
-            // 
-            this.btnexport.AutoSize = true;
-            this.btnexport.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.btnexport.Location = new System.Drawing.Point(184, 3);
-            this.btnexport.Name = "btnexport";
-            this.btnexport.Size = new System.Drawing.Size(69, 23);
-            this.btnexport.TabIndex = 2;
-            this.btnexport.Text = "{EXPORT}";
-            this.btnexport.UseVisualStyleBackColor = true;
-            this.btnexport.Click += new System.EventHandler(this.btnexport_Click);
-            // 
-            // btnimport
-            // 
-            this.btnimport.AutoSize = true;
-            this.btnimport.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.btnimport.Location = new System.Drawing.Point(259, 3);
-            this.btnimport.Name = "btnimport";
-            this.btnimport.Size = new System.Drawing.Size(67, 23);
-            this.btnimport.TabIndex = 3;
-            this.btnimport.Text = "{IMPORT}";
-            this.btnimport.UseVisualStyleBackColor = true;
-            this.btnimport.Click += new System.EventHandler(this.btnimport_Click);
-            // 
-            // btnapply
-            // 
-            this.btnapply.AutoSize = true;
-            this.btnapply.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.btnapply.Location = new System.Drawing.Point(332, 3);
-            this.btnapply.Name = "btnapply";
-            this.btnapply.Size = new System.Drawing.Size(59, 23);
-            this.btnapply.TabIndex = 4;
-            this.btnapply.Text = "{APPLY}";
-            this.btnapply.UseVisualStyleBackColor = true;
-            this.btnapply.Click += new System.EventHandler(this.btnapply_Click);
             // 
             // desktoppanel
             // 
@@ -236,7 +147,37 @@ namespace ShiftOS.WinForms.Applications
             this.apps.Name = "apps";
             this.apps.Padding = new System.Windows.Forms.Padding(0);
             this.apps.Size = new System.Drawing.Size(58, 20);
+            this.apps.Tag = "applauncherbutton";
             this.apps.Text = "ShiftOS";
+            // 
+            // item1ToolStripMenuItem
+            // 
+            this.item1ToolStripMenuItem.Name = "item1ToolStripMenuItem";
+            this.item1ToolStripMenuItem.Size = new System.Drawing.Size(107, 22);
+            this.item1ToolStripMenuItem.Text = "Item 1";
+            // 
+            // item2ToolStripMenuItem
+            // 
+            this.item2ToolStripMenuItem.Name = "item2ToolStripMenuItem";
+            this.item2ToolStripMenuItem.Size = new System.Drawing.Size(107, 22);
+            this.item2ToolStripMenuItem.Text = "Item 2";
+            // 
+            // item3ToolStripMenuItem
+            // 
+            this.item3ToolStripMenuItem.Name = "item3ToolStripMenuItem";
+            this.item3ToolStripMenuItem.Size = new System.Drawing.Size(107, 22);
+            this.item3ToolStripMenuItem.Text = "Item 3";
+            // 
+            // toolStripSeparator1
+            // 
+            this.toolStripSeparator1.Name = "toolStripSeparator1";
+            this.toolStripSeparator1.Size = new System.Drawing.Size(104, 6);
+            // 
+            // item4ToolStripMenuItem
+            // 
+            this.item4ToolStripMenuItem.Name = "item4ToolStripMenuItem";
+            this.item4ToolStripMenuItem.Size = new System.Drawing.Size(107, 22);
+            this.item4ToolStripMenuItem.Text = "Item 4";
             // 
             // lbtime
             // 
@@ -250,34 +191,18 @@ namespace ShiftOS.WinForms.Applications
             this.lbtime.Text = "label1";
             this.lbtime.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
-            // item1ToolStripMenuItem
+            // pnlborder
             // 
-            this.item1ToolStripMenuItem.Name = "item1ToolStripMenuItem";
-            this.item1ToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
-            this.item1ToolStripMenuItem.Text = "Item 1";
-            // 
-            // item2ToolStripMenuItem
-            // 
-            this.item2ToolStripMenuItem.Name = "item2ToolStripMenuItem";
-            this.item2ToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
-            this.item2ToolStripMenuItem.Text = "Item 2";
-            // 
-            // item3ToolStripMenuItem
-            // 
-            this.item3ToolStripMenuItem.Name = "item3ToolStripMenuItem";
-            this.item3ToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
-            this.item3ToolStripMenuItem.Text = "Item 3";
-            // 
-            // item4ToolStripMenuItem
-            // 
-            this.item4ToolStripMenuItem.Name = "item4ToolStripMenuItem";
-            this.item4ToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
-            this.item4ToolStripMenuItem.Text = "Item 4";
-            // 
-            // toolStripSeparator1
-            // 
-            this.toolStripSeparator1.Name = "toolStripSeparator1";
-            this.toolStripSeparator1.Size = new System.Drawing.Size(149, 6);
+            this.pnlborder.BackColor = System.Drawing.Color.Black;
+            this.pnlborder.Controls.Add(this.pnlcontents);
+            this.pnlborder.Controls.Add(this.pnlbottom);
+            this.pnlborder.Controls.Add(this.pnlright);
+            this.pnlborder.Controls.Add(this.pnlleft);
+            this.pnlborder.Controls.Add(this.pnltitlemaster);
+            this.pnlborder.Location = new System.Drawing.Point(12, 270);
+            this.pnlborder.Name = "pnlborder";
+            this.pnlborder.Size = new System.Drawing.Size(522, 251);
+            this.pnlborder.TabIndex = 1;
             // 
             // pnlcontents
             // 
@@ -288,62 +213,6 @@ namespace ShiftOS.WinForms.Applications
             this.pnlcontents.Name = "pnlcontents";
             this.pnlcontents.Size = new System.Drawing.Size(518, 219);
             this.pnlcontents.TabIndex = 9;
-            // 
-            // pnltitle
-            // 
-            this.pnltitle.BackColor = System.Drawing.Color.Black;
-            this.pnltitle.Controls.Add(this.pnlminimize);
-            this.pnltitle.Controls.Add(this.pnlmaximize);
-            this.pnltitle.Controls.Add(this.pnlclose);
-            this.pnltitle.Controls.Add(this.lbtitletext);
-            this.pnltitle.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.pnltitle.Location = new System.Drawing.Point(2, 0);
-            this.pnltitle.Name = "pnltitle";
-            this.pnltitle.Size = new System.Drawing.Size(518, 30);
-            this.pnltitle.TabIndex = 0;
-            // 
-            // pnlminimize
-            // 
-            this.pnlminimize.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.pnlminimize.BackColor = System.Drawing.Color.Green;
-            this.pnlminimize.Location = new System.Drawing.Point(437, 3);
-            this.pnlminimize.Name = "pnlminimize";
-            this.pnlminimize.Size = new System.Drawing.Size(24, 24);
-            this.pnlminimize.TabIndex = 3;
-            // 
-            // pnlmaximize
-            // 
-            this.pnlmaximize.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.pnlmaximize.BackColor = System.Drawing.Color.Yellow;
-            this.pnlmaximize.Location = new System.Drawing.Point(464, 3);
-            this.pnlmaximize.Name = "pnlmaximize";
-            this.pnlmaximize.Size = new System.Drawing.Size(24, 24);
-            this.pnlmaximize.TabIndex = 2;
-            // 
-            // pnlclose
-            // 
-            this.pnlclose.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.pnlclose.BackColor = System.Drawing.Color.Red;
-            this.pnlclose.Location = new System.Drawing.Point(491, 3);
-            this.pnlclose.Name = "pnlclose";
-            this.pnlclose.Size = new System.Drawing.Size(24, 24);
-            this.pnlclose.TabIndex = 1;
-            // 
-            // lbtitletext
-            // 
-            this.lbtitletext.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.lbtitletext.AutoSize = true;
-            this.lbtitletext.Font = new System.Drawing.Font("Consolas", 9F, System.Drawing.FontStyle.Bold);
-            this.lbtitletext.ForeColor = System.Drawing.Color.White;
-            this.lbtitletext.Location = new System.Drawing.Point(4, 0);
-            this.lbtitletext.Name = "lbtitletext";
-            this.lbtitletext.Size = new System.Drawing.Size(77, 14);
-            this.lbtitletext.TabIndex = 0;
-            this.lbtitletext.Text = "Title text";
-            this.lbtitletext.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.lbtitletext.UseMnemonic = false;
             // 
             // pnlbottom
             // 
@@ -401,6 +270,62 @@ namespace ShiftOS.WinForms.Applications
             this.pnltitlemaster.Size = new System.Drawing.Size(522, 30);
             this.pnltitlemaster.TabIndex = 5;
             // 
+            // pnltitle
+            // 
+            this.pnltitle.BackColor = System.Drawing.Color.Black;
+            this.pnltitle.Controls.Add(this.pnlminimize);
+            this.pnltitle.Controls.Add(this.pnlmaximize);
+            this.pnltitle.Controls.Add(this.pnlclose);
+            this.pnltitle.Controls.Add(this.lbtitletext);
+            this.pnltitle.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.pnltitle.Location = new System.Drawing.Point(2, 0);
+            this.pnltitle.Name = "pnltitle";
+            this.pnltitle.Size = new System.Drawing.Size(518, 30);
+            this.pnltitle.TabIndex = 0;
+            // 
+            // pnlminimize
+            // 
+            this.pnlminimize.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.pnlminimize.BackColor = System.Drawing.Color.Green;
+            this.pnlminimize.Location = new System.Drawing.Point(437, 3);
+            this.pnlminimize.Name = "pnlminimize";
+            this.pnlminimize.Size = new System.Drawing.Size(24, 24);
+            this.pnlminimize.TabIndex = 3;
+            // 
+            // pnlmaximize
+            // 
+            this.pnlmaximize.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.pnlmaximize.BackColor = System.Drawing.Color.Yellow;
+            this.pnlmaximize.Location = new System.Drawing.Point(464, 3);
+            this.pnlmaximize.Name = "pnlmaximize";
+            this.pnlmaximize.Size = new System.Drawing.Size(24, 24);
+            this.pnlmaximize.TabIndex = 2;
+            // 
+            // pnlclose
+            // 
+            this.pnlclose.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.pnlclose.BackColor = System.Drawing.Color.Red;
+            this.pnlclose.Location = new System.Drawing.Point(491, 3);
+            this.pnlclose.Name = "pnlclose";
+            this.pnlclose.Size = new System.Drawing.Size(24, 24);
+            this.pnlclose.TabIndex = 1;
+            // 
+            // lbtitletext
+            // 
+            this.lbtitletext.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.lbtitletext.AutoSize = true;
+            this.lbtitletext.Font = new System.Drawing.Font("Consolas", 9F, System.Drawing.FontStyle.Bold);
+            this.lbtitletext.ForeColor = System.Drawing.Color.White;
+            this.lbtitletext.Location = new System.Drawing.Point(4, 0);
+            this.lbtitletext.Name = "lbtitletext";
+            this.lbtitletext.Size = new System.Drawing.Size(77, 14);
+            this.lbtitletext.TabIndex = 0;
+            this.lbtitletext.Text = "Title text";
+            this.lbtitletext.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.lbtitletext.UseMnemonic = false;
+            // 
             // pnltitleright
             // 
             this.pnltitleright.Dock = System.Windows.Forms.DockStyle.Right;
@@ -417,30 +342,105 @@ namespace ShiftOS.WinForms.Applications
             this.pnltitleleft.Size = new System.Drawing.Size(2, 30);
             this.pnltitleleft.TabIndex = 4;
             // 
+            // flbuttons
+            // 
+            this.flbuttons.AutoSize = true;
+            this.flbuttons.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.flbuttons.Controls.Add(this.btnclose);
+            this.flbuttons.Controls.Add(this.btnloaddefault);
+            this.flbuttons.Controls.Add(this.btnexport);
+            this.flbuttons.Controls.Add(this.btnimport);
+            this.flbuttons.Controls.Add(this.btnapply);
+            this.flbuttons.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.flbuttons.Location = new System.Drawing.Point(0, 629);
+            this.flbuttons.Name = "flbuttons";
+            this.flbuttons.Size = new System.Drawing.Size(547, 29);
+            this.flbuttons.TabIndex = 2;
+            // 
+            // btnclose
+            // 
+            this.btnclose.AutoSize = true;
+            this.btnclose.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.btnclose.Location = new System.Drawing.Point(3, 3);
+            this.btnclose.Name = "btnclose";
+            this.btnclose.Size = new System.Drawing.Size(89, 23);
+            this.btnclose.TabIndex = 0;
+            this.btnclose.Text = "{GEN_CLOSE}";
+            this.btnclose.UseVisualStyleBackColor = true;
+            this.btnclose.Click += new System.EventHandler(this.btnclose_Click);
+            // 
+            // btnloaddefault
+            // 
+            this.btnloaddefault.AccessibleRole = System.Windows.Forms.AccessibleRole.None;
+            this.btnloaddefault.AutoSize = true;
+            this.btnloaddefault.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.btnloaddefault.Location = new System.Drawing.Point(98, 3);
+            this.btnloaddefault.Name = "btnloaddefault";
+            this.btnloaddefault.Size = new System.Drawing.Size(132, 23);
+            this.btnloaddefault.TabIndex = 1;
+            this.btnloaddefault.Text = "{GEN_LOADDEFAULT}";
+            this.btnloaddefault.UseVisualStyleBackColor = true;
+            this.btnloaddefault.Click += new System.EventHandler(this.btnloaddefault_Click);
+            // 
+            // btnexport
+            // 
+            this.btnexport.AutoSize = true;
+            this.btnexport.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.btnexport.Location = new System.Drawing.Point(236, 3);
+            this.btnexport.Name = "btnexport";
+            this.btnexport.Size = new System.Drawing.Size(82, 23);
+            this.btnexport.TabIndex = 2;
+            this.btnexport.Text = "{GEN_SAVE}";
+            this.btnexport.UseVisualStyleBackColor = true;
+            this.btnexport.Click += new System.EventHandler(this.btnexport_Click);
+            // 
+            // btnimport
+            // 
+            this.btnimport.AutoSize = true;
+            this.btnimport.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.btnimport.Location = new System.Drawing.Point(324, 3);
+            this.btnimport.Name = "btnimport";
+            this.btnimport.Size = new System.Drawing.Size(83, 23);
+            this.btnimport.TabIndex = 3;
+            this.btnimport.Text = "{GEN_LOAD}";
+            this.btnimport.UseVisualStyleBackColor = true;
+            this.btnimport.Click += new System.EventHandler(this.btnimport_Click);
+            // 
+            // btnapply
+            // 
+            this.btnapply.AutoSize = true;
+            this.btnapply.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.btnapply.Location = new System.Drawing.Point(413, 3);
+            this.btnapply.Name = "btnapply";
+            this.btnapply.Size = new System.Drawing.Size(88, 23);
+            this.btnapply.TabIndex = 4;
+            this.btnapply.Text = "{GEN_APPLY}";
+            this.btnapply.UseVisualStyleBackColor = true;
+            this.btnapply.Click += new System.EventHandler(this.btnapply_Click);
+            // 
             // Skin_Loader
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(547, 658);
             this.Controls.Add(this.flbuttons);
             this.Controls.Add(this.pnlborder);
             this.Controls.Add(this.pnldesktop);
             this.Name = "Skin_Loader";
-            this.Text = "{SKIN_LOADER_NAME}";
+            this.Size = new System.Drawing.Size(547, 658);
             this.pnldesktop.ResumeLayout(false);
-            this.pnlborder.ResumeLayout(false);
-            this.flbuttons.ResumeLayout(false);
-            this.flbuttons.PerformLayout();
             this.desktoppanel.ResumeLayout(false);
             this.desktoppanel.PerformLayout();
             this.sysmenuholder.ResumeLayout(false);
             this.sysmenuholder.PerformLayout();
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
-            this.pnltitle.ResumeLayout(false);
-            this.pnltitle.PerformLayout();
+            this.pnlborder.ResumeLayout(false);
             this.pnlbottom.ResumeLayout(false);
             this.pnltitlemaster.ResumeLayout(false);
+            this.pnltitle.ResumeLayout(false);
+            this.pnltitle.PerformLayout();
+            this.flbuttons.ResumeLayout(false);
+            this.flbuttons.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 

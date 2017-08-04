@@ -41,6 +41,8 @@ namespace ShiftOS.WinForms.Applications
     /// <summary>
     /// 
     /// </summary>
+    [DefaultTitle("{TITLE_FILEDIALOG}")]
+    [DefaultIcon("iconFileSkimmer")]
     public partial class FileDialog : UserControl, IShiftOSWindow
     {
         public FileDialog(string[] filetypes, FileOpenerStyle style, Action<string> _callback)
@@ -58,9 +60,20 @@ namespace ShiftOS.WinForms.Applications
                 try
                 {
                     var itm = lvitems.SelectedItems[0];
-                    if (FileExists(currentdir + "/" + itm.Text))
+                    if (cbfiletypes.Text != "Directory")
                     {
-                        txtfilename.Text = itm.Text;
+                        if (FileExists(currentdir + "/" + itm.Text))
+                        {
+                            txtfilename.Text = itm.Text;
+                        }
+                    }
+                    else
+                    {
+                        if (DirectoryExists(currentdir + "/" + itm.Text))
+                        {
+                            txtfilename.Text = itm.Text;
+                        }
+
                     }
                 }
                 catch { }
@@ -70,23 +83,41 @@ namespace ShiftOS.WinForms.Applications
             {
                 string fname = "";
                 fname = (!string.IsNullOrWhiteSpace(txtfilename.Text)) ? txtfilename.Text : "";
-                fname = (!fname.EndsWith(cbfiletypes.SelectedItem.ToString())) ? fname + cbfiletypes.SelectedItem.ToString() : fname;
-                fname = (fname == cbfiletypes.SelectedItem.ToString()) ? "" : fname;
+                if (cbfiletypes.Text != "Directory")
+                {
+                    fname = (!fname.EndsWith(cbfiletypes.SelectedItem.ToString())) ? fname + cbfiletypes.SelectedItem.ToString() : fname;
+                    fname = (fname == cbfiletypes.SelectedItem.ToString()) ? "" : fname;
+                }
 
                 switch (style)
                 {
 
                     case FileOpenerStyle.Open:
-                        
 
-                        if(FileExists(currentdir + "/" + fname))
+                        if (cbfiletypes.Text == "Directory")
                         {
-                            callback?.Invoke(currentdir + "/" + fname);
-                            this.Close();
+                            if (DirectoryExists(currentdir + "/" + fname))
+                            {
+                                callback?.Invoke(currentdir + "/" + fname);
+                                this.Close();
+                            }
+                            else
+                            {
+                                Infobox.Show("{TITLE_FILENOTFOUND}", "{PROMPT_FILENOTFOUND}");
+                            }
+
                         }
                         else
                         {
-                            Infobox.Show("{FILE_NOT_FOUND}", "{FILE_NOT_FOUND_EXP}");
+                            if (FileExists(currentdir + "/" + fname))
+                            {
+                                callback?.Invoke(currentdir + "/" + fname);
+                                this.Close();
+                            }
+                            else
+                            {
+                                Infobox.Show("{FILE_NOT_FOUND}", "{FILE_NOT_FOUND_EXP}");
+                            }
                         }
                         break;
                     case FileOpenerStyle.Save:

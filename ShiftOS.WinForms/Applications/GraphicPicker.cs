@@ -37,12 +37,23 @@ using ShiftOS.WinForms.Tools;
 
 namespace ShiftOS.WinForms.Applications
 {
+    [MultiplayerOnly]
+    [DefaultTitle("{TITLE_CHOOSEGRAPHIC}")] [DefaultIcon("icongraphicpicker")]
     public partial class GraphicPicker : UserControl, IShiftOSWindow
     {
         public GraphicPicker(Image old, string name, ImageLayout layout, Action<byte[], Image, ImageLayout> cb)
         {
             InitializeComponent();
             SelectedLayout = layout;
+            Image = old;
+            if (Image != null)
+            {
+                using (var ms = new System.IO.MemoryStream())
+                {
+                    Image.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
+                    ImageAsBinary = ms.ToArray();
+                }
+            }
             Callback = cb;
             lblobjecttoskin.Text = name;
             
@@ -81,12 +92,11 @@ namespace ShiftOS.WinForms.Applications
 
         public void btnidlebrowse_Click(object s, EventArgs a)
         {
-            AppearanceManager.SetupDialog(new FileDialog(new[] { ".png", ".jpg", ".bmp", ".pic" }, FileOpenerStyle.Open, new Action<string>((file) =>
+            AppearanceManager.SetupDialog(new FileDialog(new[] { ".png", ".gif", ".jpg", ".bmp", ".pic" }, FileOpenerStyle.Open, new Action<string>((file) =>
             {
                 ImageAsBinary = Utils.ReadAllBytes(file);
                 System.IO.File.WriteAllBytes("temp_bin.bmp", ImageAsBinary);
                 Image = SkinEngine.ImageFromBinary(ImageAsBinary);
-                Image.Save("temp.bmp", System.Drawing.Imaging.ImageFormat.Bmp);
                 Setup();
             })));
         }
@@ -122,10 +132,12 @@ namespace ShiftOS.WinForms.Applications
 
         public void OnLoad()
         {
+            Setup();
         }
 
         public void OnSkinLoad()
         {
+            Setup();
         }
 
         public bool OnUnload()
@@ -135,6 +147,7 @@ namespace ShiftOS.WinForms.Applications
 
         public void OnUpgrade()
         {
+            Setup();
         }
     }
 }

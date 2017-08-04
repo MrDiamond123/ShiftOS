@@ -28,16 +28,16 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Drawing;
-using static ShiftOS.Engine.SkinEngine;
+using ShiftOS.Engine;
 using System.Windows.Forms;
 
 namespace ShiftOS.WinForms.Tools
 {
     public class ShiftOSMenuRenderer : ToolStripProfessionalRenderer
     {
-        public ShiftOSMenuRenderer() : base(new ShiftOSColorTable())
+        public ShiftOSMenuRenderer() : base(new ShiftOSColorTable(ShiftOS.Engine.SkinEngine.LoadedSkin))
         {
-
+            
         }
 
         public ShiftOSMenuRenderer(ProfessionalColorTable table) : base(table)
@@ -45,23 +45,92 @@ namespace ShiftOS.WinForms.Tools
 
         }
 
+        public ShiftOSMenuRenderer(Skin skn) : base(new ShiftOSColorTable(skn))
+        {
+
+        }
+
+        public Skin LoadedSkin
+        {
+            get
+            {
+                if(ColorTable is ShiftOSColorTable)
+                {
+                    return (ColorTable as ShiftOSColorTable).LoadedSkin;
+                }
+                else
+                {
+                    return SkinEngine.LoadedSkin;
+                }
+            }
+        }
+
         protected override void OnRenderItemText(ToolStripItemTextRenderEventArgs e)
         {
-            e.TextFont = LoadedSkin.MainFont;
-            if (e.Item.Selected == true)
+            if (e.Item.Tag?.ToString() == "applauncherbutton")
             {
-                e.TextColor = LoadedSkin.Menu_SelectedTextColor;
+                e.TextFont = LoadedSkin.AppLauncherFont;
+                if(e.Item.Selected == true)
+                {
+                    e.TextColor = LoadedSkin.AppLauncherSelectedTextColor;
+                }
+                else
+                {
+                    e.TextColor = LoadedSkin.AppLauncherTextColor;
+                }
             }
             else
             {
-                e.TextColor = LoadedSkin.Menu_TextColor;
+                e.TextFont = LoadedSkin.MainFont;
+                if (e.Item.Selected == true)
+                {
+                    e.TextColor = LoadedSkin.Menu_SelectedTextColor;
+                }
+                else
+                {
+                    e.TextColor = LoadedSkin.Menu_TextColor;
+                }
             }
+            e.TextRectangle = GenRect(e.Text, e.TextFont, e.Item.Size, e.Graphics, e.TextRectangle);
             base.OnRenderItemText(e);
+        }
+
+        private Rectangle GenRect(string t, Font f, Size s, Graphics g, Rectangle rekt)
+        {
+
+            Rectangle rect = new Rectangle();
+            var fSize = g.MeasureString(t, f);
+            int width = rekt.Left + (int)fSize.Width;
+            int height = rekt.Top + (int)fSize.Height;
+
+            int rwidth = rekt.Left + rekt.Width;
+            int rheight = rekt.Top + rekt.Height;
+
+            int wDiff = (width - rwidth);
+            int hDiff = (height - rheight);
+
+            rect = new Rectangle(rekt.Left, rekt.Top, rekt.Width + wDiff, rekt.Height + hDiff);
+
+
+
+            return rect;
         }
     }
 
     public class ShiftOSColorTable : ProfessionalColorTable
     {
+        public ShiftOSColorTable(ShiftOS.Engine.Skin skn)
+        {
+            LoadedSkin = skn;
+        }
+
+        public Skin LoadedSkin { get; private set; }
+
+        public Image GetImage(string id)
+        {
+            return SkinEngine.GetImage(id);
+        }
+
         public override Color ButtonSelectedHighlight
         {
             get { return LoadedSkin.Menu_ButtonSelectedHighlight; }
@@ -290,6 +359,23 @@ namespace ShiftOS.WinForms.Tools
 
     public class AppLauncherColorTable : ProfessionalColorTable
     {
+        public Image GetImage(string id)
+        {
+            return SkinEngine.GetImage(id);
+        }
+
+        public AppLauncherColorTable()
+        {
+            LoadedSkin = SkinEngine.LoadedSkin;
+        }
+
+        public AppLauncherColorTable(Skin skn)
+        {
+            LoadedSkin = skn;
+        }
+
+        public Skin LoadedSkin { get; private set; }
+
         public override Color ButtonSelectedHighlight
         {
             get { return LoadedSkin.Menu_ButtonSelectedHighlight; }
@@ -404,11 +490,31 @@ namespace ShiftOS.WinForms.Tools
         }
         public override Color MenuStripGradientBegin
         {
-            get { return LoadedSkin.Menu_MenuStripGradientBegin; }
+            get
+            {
+                if (LoadedSkin.AppLauncherImage != null)
+                {
+                    return Color.Transparent;
+                }
+                else
+                {
+                    return LoadedSkin.Menu_MenuStripGradientBegin;
+                }
+            }
         }
         public override Color MenuStripGradientEnd
         {
-            get { return LoadedSkin.Menu_MenuStripGradientEnd; }
+            get
+            {
+                if (LoadedSkin.AppLauncherImage != null)
+                {
+                    return Color.Transparent;
+                }
+                else
+                {
+                    return LoadedSkin.Menu_MenuStripGradientEnd;
+                }
+            }
         }
         public override Color MenuItemSelected
         {

@@ -34,16 +34,37 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 
 using static ShiftOS.Objects.ShiftFS.Utils;
-using Newtonsoft.Json;
 using ShiftOS.Engine;
+using Newtonsoft.Json;
+using ShiftOS.WinForms.Tools;
 
 namespace ShiftOS.WinForms.Applications
 {
-    [Launcher("File Skimmer", true, "al_file_skimmer")]
+    [Launcher("{TITLE_FILESKIMMER}", true, "al_file_skimmer", "{AL_UTILITIES}")]
     [RequiresUpgrade("file_skimmer")]
-    [WinOpen("file_skimmer")]
+    [WinOpen("{WO_FILESKIMMER}")]
+    [DefaultTitle("{TITLE_FILESKIMMER}")]
+    [DefaultIcon("iconFileSkimmer")]
     public partial class FileSkimmer : UserControl, IShiftOSWindow
     {
+
+        public static Objects.ClientSave CurrentRemoteUser = new Objects.ClientSave();
+        public static ShiftOSEnvironment OpenConnection = new ShiftOSEnvironment();
+
+        private static event Action OnDisconnect;
+
+        public static void DisconnectRemote()
+        {
+            Desktop.InvokeOnWorkerThread(() =>
+            {
+                OnDisconnect?.Invoke();
+                CurrentRemoteUser = new Objects.ClientSave();
+                if (!string.IsNullOrWhiteSpace(OpenConnection.SystemName))
+                    Infobox.Show("Connections terminated.", "All outbound File Skimmer connections have been terminated.");
+                OpenConnection = new ShiftOSEnvironment();
+            });
+        }
+
         public FileSkimmer()
         {
             InitializeComponent();
@@ -51,6 +72,15 @@ namespace ShiftOS.WinForms.Applications
             {
                 ChangeDirectory(Paths.GetPath("root"));
             };
+            OnDisconnect += FileSkimmer_OnDisconnect;
+        }
+
+        private void FileSkimmer_OnDisconnect()
+        {
+            connectToRemoteServerToolStripMenuItem.Text = "Start Remote Session";
+            disconnectToolStripMenuItem.Visible = false;
+            currentdir = "__system";
+            ResetList();
         }
 
         private void lvitems_DoubleClick(object sender, EventArgs e)
@@ -123,6 +153,20 @@ namespace ShiftOS.WinForms.Applications
 
         private string currentdir = "";
 
+        public void pinDirectory(string path)
+        {
+            int amountsCalled = -1;
+            amountsCalled = amountsCalled + 1;
+            List<string> Pinned = new List<string>();
+            if(FileExists(Paths.GetPath("data") + "/pinned_items.dat"))
+            {
+                Pinned = JsonConvert.DeserializeObject<List<string>>(ReadAllText(Paths.GetPath("data") + "/pinned_items.dat"));
+            }
+            Pinned.Add(path);
+            WriteAllText(Paths.GetPath("data") + "/pinned_items.dat", JsonConvert.SerializeObject(Pinned));
+            ResetList();
+        }
+
         public void ChangeDirectory(string path)
         {
             currentdir = path;
@@ -143,8 +187,40 @@ namespace ShiftOS.WinForms.Applications
             }
         }
 
+        public void PopulatePinned(TreeNode node, string[] items)
+        {
+            foreach(var dir in items)
+            {
+                var treenode = new TreeNode();
+                if (DirectoryExists(dir))
+                {
+                    var dinf = GetDirectoryInfo(dir);
+                    treenode.Text = dinf.Name;
+                }
+                else if (FileExists(dir))
+                {
+                    var finf = GetFileInfo(dir);
+                    treenode.Text = finf.Name;
+                }
+                treenode.Tag = dir;
+                node.Nodes.Add(treenode);
+            }
+        }
+
         public void ResetList()
         {
+            pinnedItems.Nodes.Clear();
+            List<string> Pinned = new List<string>();
+            if(FileExists(Paths.GetPath("data") + "/pinned_items.dat"))
+            {
+                Pinned = JsonConvert.DeserializeObject<List<string>>(ReadAllText(Paths.GetPath("data") + "/pinned_items.dat"));
+            }
+            var node = new TreeNode();
+            node.Text = "Pinned";
+            PopulatePinned(node, Pinned.ToArray());
+            pinnedItems.Nodes.Add(node);
+            node.ExpandAll();
+
             if(lvitems.LargeImageList == null)
             {
                 lvitems.LargeImageList = new ImageList();
@@ -231,6 +307,8 @@ namespace ShiftOS.WinForms.Applications
                     return Properties.Resources.fileicon10;
                 case FileType.TextFile:
                     return Properties.Resources.fileicon2;
+                case FileType.CommandFormat:
+                    return Properties.Resources.fileiconcf;
                 default:
                     return Properties.Resources.fileicon1;
             }
@@ -250,13 +328,277 @@ namespace ShiftOS.WinForms.Applications
 
         public bool OnUnload()
         {
+            OnDisconnect -= FileSkimmer_OnDisconnect;
             return true;
         }
 
         public void OnUpgrade()
         {
+            moveToolStripMenuItem.Visible = false;
+            copyToolStripMenuItem.Visible = false;
+            deleteToolStripMenuItem.Visible = false;
+        }
+
+        private void newFolderToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Infobox.PromptText("New Folder", "Please type a name for your folder.", (path) =>
+            {
+                if (!string.IsNullOrWhiteSpace(path))
+                {
+                    if(!Utils.DirectoryExists(this.currentdir + "/" + path))
+                    {
+                        Utils.CreateDirectory(currentdir + "/" + path);
+                        this.ResetList();
+                    }
+                    else
+                    {
+                        Infobox.Show("New folder", "A folder with that name already exists.");
+                    }
+                }
+                else
+                {
+                    Infobox.Show("New folder", "You can't create a folder with no name!");
+                }
+            });
+        }
+
+        private void lvitems_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            try
+            {
+                if (currentdir != "__system")
+                {
+                    var itm = lvitems.SelectedItems[0];
+                    if (itm.Tag.ToString() != "__..")
+                    {
+                        if (DirectoryExists(currentdir + "/" + itm.Tag.ToString()))
+                        {
+                            deleteToolStripMenuItem.Visible = Shiftorium.UpgradeInstalled("fs_recursive_delete");
+                            moveToolStripMenuItem.Visible = Shiftorium.UpgradeInstalled("fs_move_folder");
+                            copyToolStripMenuItem.Visible = Shiftorium.UpgradeInstalled("fs_copy_folder");
+                        }
+                        else if (FileExists(currentdir + "/" + itm.Tag.ToString()))
+                        {
+                            deleteToolStripMenuItem.Visible = Shiftorium.UpgradeInstalled("fs_delete");
+                            moveToolStripMenuItem.Visible = Shiftorium.UpgradeInstalled("fs_move");
+                            copyToolStripMenuItem.Visible = Shiftorium.UpgradeInstalled("fs_copy");
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                moveToolStripMenuItem.Visible = false;
+                copyToolStripMenuItem.Visible = false;
+            }
+        }
+
+        private void lvitems_ItemSelectionChanged(object sender, ListViewItemSelectionChangedEventArgs e)
+        {
+            if(lvitems.SelectedItems.Count == 0)
+            {
+                moveToolStripMenuItem.Visible = false;
+                copyToolStripMenuItem.Visible = false;
+                deleteToolStripMenuItem.Visible = false;
+            }
+        }
+
+        private void copyToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                string path = currentdir + "/" + lvitems.SelectedItems[0].Tag.ToString();
+                if (DirectoryExists(path))
+                {
+                    FileSkimmerBackend.GetFile(new[] { "Directory" }, FileOpenerStyle.Save, (newPath) =>
+                     {
+                         Copy(path, newPath);
+                         ResetList();
+                     });
+                }
+                else if (FileExists(path))
+                {
+                    string[] psplit = path.Split('.');
+                    string ext = "." + psplit[psplit.Length - 1];
+                    FileSkimmerBackend.GetFile(new[] { ext }, FileOpenerStyle.Save, (newPath) =>
+                    {
+                        Copy(path, newPath);
+                        ResetList();
+                    });
+
+                }
+            }
+            catch
+            {
+
+            }
+        }
+
+        private void moveToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                string path = currentdir + "/" + lvitems.SelectedItems[0].Tag.ToString();
+                if (DirectoryExists(path))
+                {
+                    FileSkimmerBackend.GetFile(new[] { "Directory" }, FileOpenerStyle.Save, (newPath) =>
+                    {
+                        Utils.Move(path, newPath);
+                        ResetList();
+                    });
+                }
+                else if (FileExists(path))
+                {
+                    string[] psplit = path.Split('.');
+                    string ext = psplit[psplit.Length - 1];
+                    FileSkimmerBackend.GetFile(new[] { ext }, FileOpenerStyle.Save, (newPath) =>
+                    {
+                        Utils.Move(path, newPath);
+                        ResetList();
+                    });
+
+                }
+            }
+            catch
+            {
+
+            }
+
+        }
+
+        private void deleteToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                Infobox.PromptYesNo("Delete file", "Are you sure you want to delete " + lvitems.SelectedItems[0].Text + "?", (result) =>
+                {
+                    if (result == true)
+                    {
+                        Delete(currentdir + "/" + lvitems.SelectedItems[0].Tag.ToString());
+                        ResetList();
+                    }
+                });
+            }
+            catch { }
+        }
+
+        private void pinToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                Infobox.PromptYesNo("Pin folder", "Are you sure you want to pin \"" + lvitems.SelectedItems[0].Text + "\"?", (result) =>
+                {
+                    if (result == true)
+                    {
+                        if (currentdir != "__system" && lvitems.SelectedItems[0].Text != "Up one")
+                        {
+                            pinDirectory(currentdir + "/" + lvitems.SelectedItems[0].Text);
+                            ResetList();
+                        }
+                        else
+                        {
+                            Infobox.Show("Cannot Pin", "You can only pin files or folders.");
+                        }
+                            
+                    }
+                });
+            }
+            catch { }
+        }
+
+        private void pinnedItems_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                if (pinnedItems.SelectedNode != null)
+                {
+                    string path = pinnedItems.SelectedNode.Tag.ToString();
+                    if (DirectoryExists(path))
+                    {
+                        currentdir = path;
+                        ResetList();
+                    }
+                    else if (FileExists(path))
+                    {
+                        FileSkimmerBackend.OpenFile(path);
+                    }
+                }
+            }
+            catch { }
+        }
+
+        private void connectToRemoteServerToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ShowConnectionBox();
+        }
+
+        public void ShowConnectionBox()
+        {
+            pnlconnect.Show();
+            pnlconnect.BringToFront();
+            pnlconnect.CenterParent();
+
+            //header
+            lbctitle.CenterParent();
+            lbctitle.Top = 5;
+
+            //description
+            lbcdesc.CenterParent();
+            lbcdesc.Top = lbctitle.Top + lbctitle.Height + 5;
+
+            //credentials
+            pnlcreds.CenterParent();
+            pnlcreds.Top = lbcdesc.Top + lbcdesc.Height + 5;
+            txtcsys.Text = OpenConnection.SystemName;
+            txtcuser.Text = CurrentRemoteUser.Username;
+            txtcpass.Text = CurrentRemoteUser.Password;
+
+            //controls
+            flcbuttons.CenterParent();
+            flcbuttons.Top = pnlcreds.Top + pnlcreds.Height + 5;
+        }
+
+        private void btncancel_Click(object sender, EventArgs e)
+        {
+            pnlconnect.Hide();
+        }
+
+        private void btnok_Click(object sender, EventArgs e)
+        {
+            var sys = VirtualEnvironments.Get(txtcsys.Text);
+
+            if(sys != null)
+            {
+                //user auth
+                var user = sys.Users.FirstOrDefault(x => x.Username == txtcuser.Text && x.Password == txtcpass.Text);
+                if(user != null)
+                {
+                    OpenConnection = sys;
+                    CurrentRemoteUser = user;
+                    if (Mounts.Count == 3)
+                        Mounts.RemoveAt(2);
+                    Mounts.Add(sys.Filesystem);
+                    ChangeDirectory("2:");
+                    pnlconnect.Hide();
+                    connectToRemoteServerToolStripMenuItem.Text = "Reauthenticate";
+                    disconnectToolStripMenuItem.Visible = true;
+                    return;
+                }
+                Infobox.Show("Access denied.", "Authentication failed for the specified user. Connection aborted.");
+                return;
+            }
+            var t = new System.Threading.Thread(() =>
+            {
+                System.Threading.Thread.Sleep(5000);
+                Infobox.Show("Connection timeout.", "Cannot connect to the specified system name...");
+            });
+            t.IsBackground = true;
+            t.Start();
+        }
+
+        private void disconnectToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            DisconnectRemote();
         }
     }
-
-   
 }

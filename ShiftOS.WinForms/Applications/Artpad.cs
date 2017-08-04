@@ -38,13 +38,21 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using ShiftOS.WinForms.Tools;
 using ShiftOS.Engine;
+using System.Diagnostics;
 
 namespace ShiftOS.WinForms.Applications
 {
-    [Launcher("Artpad", true, "al_artpad")]
+    [FileHandler("Artpad Picture", ".pic", "fileiconpicture")]
+    [FileHandler("JPEG Picture", ".jpg", "fileiconpicture")]
+    [FileHandler("PNG Picture", ".png", "fileiconpicture")]
+    [FileHandler("Bitmap Picture", ".bmp", "fileiconpicture")]
+    [MultiplayerOnly]
+    [Launcher("{TIITLE_ARTPAD}", true, "al_artpad", "{AL_GRAPHICS}")]
     [RequiresUpgrade("artpad")]
-    [WinOpen("artpad")]
-    public partial class Artpad : UserControl, IShiftOSWindow
+    [WinOpen("{WO_ARTPAD}")]
+    [DefaultIcon("iconArtpad")]
+    [DefaultTitle("{TITLE_ARTPAD}")]
+    public partial class Artpad : UserControl, IShiftOSWindow, IFileHandler
     {
         /// <summary>
         /// artpad_'s GUI.
@@ -89,8 +97,8 @@ namespace ShiftOS.WinForms.Applications
         Color canvascolor = Color.White;
 
         Bitmap previewcanvasbitmap;
-        int magnificationlevel = 1;
-        Rectangle magnifyRect;
+        float magnificationlevel = 1;
+        RectangleF magnifyRect;
         Graphics graphicsbitmap;
         public Color drawingcolour = Color.Black;
         string selectedtool = "Pixel Setter";
@@ -99,7 +107,7 @@ namespace ShiftOS.WinForms.Applications
         System.Drawing.Drawing2D.GraphicsPath mousePath = new System.Drawing.Drawing2D.GraphicsPath();
         int pencilwidth = 1;
         undo undo = new undo();
-        Point thisPoint;
+        PointF thisPoint;
         int eracerwidth = 15;
 
         string eracertype = "square";
@@ -138,17 +146,7 @@ namespace ShiftOS.WinForms.Applications
 
         private void Template_Load(object sender, EventArgs e)
         {
-            justopened = true;
-            this.Left = (Screen.PrimaryScreen.Bounds.Width - this.Width) / 2;
-            this.Top = (Screen.PrimaryScreen.Bounds.Height - this.Height) / 2;
-
-            setuppreview();
-            settoolcolours();
-            loadcolors();
-            AddFonts();
-            setuptoolbox();
-            determinevisiblepalettes();
-            tmrsetupui.Start();
+            //Moved to the engine "OnLoad" method.
         }
 
 
@@ -168,55 +166,30 @@ namespace ShiftOS.WinForms.Applications
             needtosave = false;
         }
 
+        //PHILCODE: I just reduced this function's amount of Windows Forms calls by 66%.
         public void setuptoolbox()
         {
-            btnpixelplacer.Hide();
-            btnpencil.Hide();
-            btnfloodfill.Hide();
-            btnoval.Hide();
-            btnsquare.Hide();
-            btnlinetool.Hide();
-            btnpaintbrush.Hide();
-            btntexttool.Hide();
-            btneracer.Hide();
-            btnnew.Hide();
-            btnopen.Hide();
-            btnsave.Hide();
-            btnundo.Hide();
-            btnredo.Hide();
-            btnpixelplacermovementmode.Hide();
+            gENSAVEToolStripMenuItem.Visible = Shiftorium.UpgradeInstalled("artpad_save");
+            gENLOADToolStripMenuItem.Visible = Shiftorium.UpgradeInstalled("artpad_open");
+            gENNEWToolStripMenuItem.Visible = Shiftorium.UpgradeInstalled("artpad_new");
 
-            if (ShiftoriumFrontend.UpgradeInstalled("artpad_pixel_placer") == true)
-                btnpixelplacer.Show();
-            if (ShiftoriumFrontend.UpgradeInstalled("artpad_pencil") == true)
-                btnpencil.Show();
-            if (ShiftoriumFrontend.UpgradeInstalled("artpad_fill_tool") == true)
-                btnfloodfill.Show();
-            if (ShiftoriumFrontend.UpgradeInstalled("artpad_oval_tool") == true)
-                btnoval.Show();
-            if (ShiftoriumFrontend.UpgradeInstalled("artpad_rectangle_tool") == true)
-                btnsquare.Show();
-            if (ShiftoriumFrontend.UpgradeInstalled("artpad_line_tool") == true)
-                btnlinetool.Show();
-            if (ShiftoriumFrontend.UpgradeInstalled("artpad_paintbrush") == true)
-                btnpaintbrush.Show();
-            if (ShiftoriumFrontend.UpgradeInstalled("artpad_text_tool") == true)
-                btntexttool.Show();
-            if (ShiftoriumFrontend.UpgradeInstalled("artpad_eraser") == true)
-                btneracer.Show();
-            if (ShiftoriumFrontend.UpgradeInstalled("artpad_new") == true)
-                btnnew.Show();
-            if (ShiftoriumFrontend.UpgradeInstalled("artpad_load") == true)
-                btnopen.Show();
-            if (ShiftoriumFrontend.UpgradeInstalled("artpad_save") == true)
-                btnsave.Show();
-            if (ShiftoriumFrontend.UpgradeInstalled("artpad_undo") == true)
-                btnundo.Show();
-            if (ShiftoriumFrontend.UpgradeInstalled("artpad_redo") == true)
-                btnredo.Show();
-            if (ShiftoriumFrontend.UpgradeInstalled("artpad_pp_movement_mode") == true)
-                btnpixelplacermovementmode.Show();
+            undoToolStripMenuItem.Visible = Shiftorium.UpgradeInstalled("artpad_undo");
+            redoToolStripMenuItem.Visible = Shiftorium.UpgradeInstalled("artpad_redo");
 
+            editToolStripMenuItem.Visible = (undoToolStripMenuItem.Visible || redoToolStripMenuItem.Visible);
+
+
+
+            btnpixelplacer.Visible = (ShiftoriumFrontend.UpgradeInstalled("artpad_pixel_placer") == true);
+            btnpencil.Visible = (ShiftoriumFrontend.UpgradeInstalled("artpad_pencil") == true);
+            btnfloodfill.Visible = (ShiftoriumFrontend.UpgradeInstalled("artpad_fill_tool") == true);
+            btnoval.Visible = (ShiftoriumFrontend.UpgradeInstalled("artpad_oval_tool") == true);
+            btnsquare.Visible = (ShiftoriumFrontend.UpgradeInstalled("artpad_rectangle_tool") == true);
+            btnlinetool.Visible = (ShiftoriumFrontend.UpgradeInstalled("artpad_line_tool") == true);
+            btnpaintbrush.Visible = (ShiftoriumFrontend.UpgradeInstalled("artpad_paintbrush") == true);
+            btntexttool.Visible = (ShiftoriumFrontend.UpgradeInstalled("artpad_text_tool") == true);
+            btneracer.Visible = (ShiftoriumFrontend.UpgradeInstalled("artpad_eraser") == true);
+            btnpixelplacermovementmode.Visible = (ShiftoriumFrontend.UpgradeInstalled("artpad_pp_movement_mode") == true);
         }
 
         private void AddFonts()
@@ -404,8 +377,8 @@ namespace ShiftOS.WinForms.Applications
             undo.redoStack.Clear();
 
 
-            thisPoint.X = (int)(e.Location.X - (magnificationlevel / 2)) / magnificationlevel;
-            thisPoint.Y = (int)(e.Location.Y - (magnificationlevel / 2)) / magnificationlevel;
+            thisPoint.X = (e.Location.X - (magnificationlevel / 2)) / magnificationlevel;
+            thisPoint.Y = (e.Location.Y - (magnificationlevel / 2)) / magnificationlevel;
 
             if (selectedtool == "Pixel Placer")
             {
@@ -415,7 +388,7 @@ namespace ShiftOS.WinForms.Applications
                     {
                         if (thisPoint.Y < canvasbitmap.Height && thisPoint.Y > -1)
                         {
-                            canvasbitmap.SetPixel(thisPoint.X, thisPoint.Y, drawingcolour);
+                            canvasbitmap.SetPixel((int)thisPoint.X, (int)thisPoint.Y, drawingcolour);
                             //set the pixel on the canvas
                             picdrawingdisplay.Invalidate();
                             //refresh the picture from the canvas
@@ -441,7 +414,7 @@ namespace ShiftOS.WinForms.Applications
                     {
                         if (thisPoint.Y < canvasbitmap.Height && thisPoint.Y > -1)
                         {
-                            SafeFloodFill(canvasbitmap, thisPoint.X, thisPoint.Y, drawingcolour);
+                            SafeFloodFill(canvasbitmap, (int)thisPoint.X, (int)thisPoint.Y, drawingcolour);
                             graphicsbitmap = Graphics.FromImage(canvasbitmap);
                             picdrawingdisplay.Invalidate();
                         }
@@ -527,10 +500,10 @@ namespace ShiftOS.WinForms.Applications
         // ERROR: Handles clauses are not supported in C#
         private void picdrawingdisplay_MouseMove(object sender, System.Windows.Forms.MouseEventArgs e)
         {
-            Point lastpoint;
+            PointF lastpoint;
 
-            thisPoint.X = (int)(e.Location.X - (magnificationlevel / 2)) / magnificationlevel;
-            thisPoint.Y = (int)(e.Location.Y - (magnificationlevel / 2)) / magnificationlevel;
+            thisPoint.X = (e.Location.X - (magnificationlevel / 2)) / magnificationlevel;
+            thisPoint.Y = (e.Location.Y - (magnificationlevel / 2)) / magnificationlevel;
 
 
             if (e.Button == MouseButtons.Left)
@@ -545,7 +518,8 @@ namespace ShiftOS.WinForms.Applications
                     {
                         if (thisPoint.Y < canvasbitmap.Height && thisPoint.Y > -1)
                         {
-                            canvasbitmap.SetPixel(thisPoint.X, thisPoint.Y, drawingcolour);
+                            //NO, NO, NO... Please don't tell me you're using SetPixel()... Whatever...
+                            canvasbitmap.SetPixel((int)thisPoint.X, (int)thisPoint.Y, drawingcolour);
                             //set the pixel on the canvas
                             picdrawingdisplay.Invalidate();
                             //refresh the picture from the canvas
@@ -618,8 +592,8 @@ namespace ShiftOS.WinForms.Applications
         // ERROR: Handles clauses are not supported in C#
         private void picdrawingdisplay_MouseUp(object sender, MouseEventArgs e)
         {
-            thisPoint.X = (int)(e.Location.X - (magnificationlevel / 2)) / magnificationlevel;
-            thisPoint.Y = (int)(e.Location.Y - (magnificationlevel / 2)) / magnificationlevel;
+            thisPoint.X = (e.Location.X - (magnificationlevel / 2)) / magnificationlevel;
+            thisPoint.Y = (e.Location.Y - (magnificationlevel / 2)) / magnificationlevel;
 
             if (selectedtool == "Pencil")
             {
@@ -685,290 +659,6 @@ namespace ShiftOS.WinForms.Applications
             }
         }
 
-        //<unused>
-        public void loadcolors()
-        {
-            /*bool allwhite = true;
-            for (int i = 0; i <= 127; i++)
-            {
-                if (ShiftOSDesktop.artpad_colour_palettes(i) == null)
-                {
-                }
-                else {
-                    allwhite = false;
-                }
-            }
-            if (allwhite == true)
-            {
-                for (i = 0; i <= 127; i++)
-                {
-                    ShiftOSDesktop.artpad_colour_palettes(i) = Color.Black;
-                }
-            }
-            colourpalette1.BackColor = ShiftOSDesktop.artpad_colour_palettes(0);
-            colourpalette2.BackColor = ShiftOSDesktop.artpad_colour_palettes(1);
-            colourpalette3.BackColor = ShiftOSDesktop.artpad_colour_palettes(2);
-            colourpalette4.BackColor = ShiftOSDesktop.artpad_colour_palettes(3);
-            colourpalette5.BackColor = ShiftOSDesktop.artpad_colour_palettes(4);
-            colourpalette6.BackColor = ShiftOSDesktop.artpad_colour_palettes(5);
-            colourpalette7.BackColor = ShiftOSDesktop.artpad_colour_palettes(6);
-            colourpalette8.BackColor = ShiftOSDesktop.artpad_colour_palettes(7);
-            colourpalette9.BackColor = ShiftOSDesktop.artpad_colour_palettes(8);
-            colourpalette10.BackColor = ShiftOSDesktop.artpad_colour_palettes(9);
-            colourpalette11.BackColor = ShiftOSDesktop.artpad_colour_palettes(10);
-            colourpalette12.BackColor = ShiftOSDesktop.artpad_colour_palettes(11);
-            colourpalette13.BackColor = ShiftOSDesktop.artpad_colour_palettes(12);
-            colourpalette14.BackColor = ShiftOSDesktop.artpad_colour_palettes(13);
-            colourpalette15.BackColor = ShiftOSDesktop.artpad_colour_palettes(14);
-            colourpalette16.BackColor = ShiftOSDesktop.artpad_colour_palettes(15);
-            colourpalette17.BackColor = ShiftOSDesktop.artpad_colour_palettes(16);
-            colourpalette18.BackColor = ShiftOSDesktop.artpad_colour_palettes(17);
-            colourpalette19.BackColor = ShiftOSDesktop.artpad_colour_palettes(18);
-            colourpalette20.BackColor = ShiftOSDesktop.artpad_colour_palettes(19);
-            colourpalette21.BackColor = ShiftOSDesktop.artpad_colour_palettes(20);
-            colourpalette22.BackColor = ShiftOSDesktop.artpad_colour_palettes(21);
-            colourpalette23.BackColor = ShiftOSDesktop.artpad_colour_palettes(22);
-            colourpalette24.BackColor = ShiftOSDesktop.artpad_colour_palettes(23);
-            colourpalette25.BackColor = ShiftOSDesktop.artpad_colour_palettes(24);
-            colourpalette26.BackColor = ShiftOSDesktop.artpad_colour_palettes(25);
-            colourpalette27.BackColor = ShiftOSDesktop.artpad_colour_palettes(26);
-            colourpalette28.BackColor = ShiftOSDesktop.artpad_colour_palettes(27);
-            colourpalette29.BackColor = ShiftOSDesktop.artpad_colour_palettes(28);
-            colourpalette30.BackColor = ShiftOSDesktop.artpad_colour_palettes(29);
-            colourpalette31.BackColor = ShiftOSDesktop.artpad_colour_palettes(30);
-            colourpalette32.BackColor = ShiftOSDesktop.artpad_colour_palettes(31);
-            colourpalette33.BackColor = ShiftOSDesktop.artpad_colour_palettes(32);
-            colourpalette34.BackColor = ShiftOSDesktop.artpad_colour_palettes(33);
-            colourpalette35.BackColor = ShiftOSDesktop.artpad_colour_palettes(34);
-            colourpalette36.BackColor = ShiftOSDesktop.artpad_colour_palettes(35);
-            colourpalette37.BackColor = ShiftOSDesktop.artpad_colour_palettes(36);
-            colourpalette38.BackColor = ShiftOSDesktop.artpad_colour_palettes(37);
-            colourpalette39.BackColor = ShiftOSDesktop.artpad_colour_palettes(38);
-            colourpalette40.BackColor = ShiftOSDesktop.artpad_colour_palettes(39);
-            colourpalette41.BackColor = ShiftOSDesktop.artpad_colour_palettes(40);
-            colourpalette42.BackColor = ShiftOSDesktop.artpad_colour_palettes(41);
-            colourpalette43.BackColor = ShiftOSDesktop.artpad_colour_palettes(42);
-            colourpalette44.BackColor = ShiftOSDesktop.artpad_colour_palettes(43);
-            colourpalette45.BackColor = ShiftOSDesktop.artpad_colour_palettes(44);
-            colourpalette46.BackColor = ShiftOSDesktop.artpad_colour_palettes(45);
-            colourpalette47.BackColor = ShiftOSDesktop.artpad_colour_palettes(46);
-            colourpalette48.BackColor = ShiftOSDesktop.artpad_colour_palettes(47);
-            colourpalette49.BackColor = ShiftOSDesktop.artpad_colour_palettes(48);
-            colourpalette50.BackColor = ShiftOSDesktop.artpad_colour_palettes(49);
-            colourpalette51.BackColor = ShiftOSDesktop.artpad_colour_palettes(50);
-            colourpalette52.BackColor = ShiftOSDesktop.artpad_colour_palettes(51);
-            colourpalette53.BackColor = ShiftOSDesktop.artpad_colour_palettes(52);
-            colourpalette54.BackColor = ShiftOSDesktop.artpad_colour_palettes(53);
-            colourpalette55.BackColor = ShiftOSDesktop.artpad_colour_palettes(54);
-            colourpalette56.BackColor = ShiftOSDesktop.artpad_colour_palettes(55);
-            colourpalette57.BackColor = ShiftOSDesktop.artpad_colour_palettes(56);
-            colourpalette58.BackColor = ShiftOSDesktop.artpad_colour_palettes(57);
-            colourpalette59.BackColor = ShiftOSDesktop.artpad_colour_palettes(58);
-            colourpalette60.BackColor = ShiftOSDesktop.artpad_colour_palettes(59);
-            colourpalette61.BackColor = ShiftOSDesktop.artpad_colour_palettes(60);
-            colourpalette62.BackColor = ShiftOSDesktop.artpad_colour_palettes(61);
-            colourpalette63.BackColor = ShiftOSDesktop.artpad_colour_palettes(62);
-            colourpalette64.BackColor = ShiftOSDesktop.artpad_colour_palettes(63);
-            colourpalette65.BackColor = ShiftOSDesktop.artpad_colour_palettes(64);
-            colourpalette66.BackColor = ShiftOSDesktop.artpad_colour_palettes(65);
-            colourpalette67.BackColor = ShiftOSDesktop.artpad_colour_palettes(66);
-            colourpalette68.BackColor = ShiftOSDesktop.artpad_colour_palettes(67);
-            colourpalette69.BackColor = ShiftOSDesktop.artpad_colour_palettes(68);
-            colourpalette70.BackColor = ShiftOSDesktop.artpad_colour_palettes(69);
-            colourpalette71.BackColor = ShiftOSDesktop.artpad_colour_palettes(70);
-            colourpalette72.BackColor = ShiftOSDesktop.artpad_colour_palettes(71);
-            colourpalette73.BackColor = ShiftOSDesktop.artpad_colour_palettes(72);
-            colourpalette74.BackColor = ShiftOSDesktop.artpad_colour_palettes(73);
-            colourpalette75.BackColor = ShiftOSDesktop.artpad_colour_palettes(74);
-            colourpalette76.BackColor = ShiftOSDesktop.artpad_colour_palettes(75);
-            colourpalette77.BackColor = ShiftOSDesktop.artpad_colour_palettes(76);
-            colourpalette78.BackColor = ShiftOSDesktop.artpad_colour_palettes(77);
-            colourpalette79.BackColor = ShiftOSDesktop.artpad_colour_palettes(78);
-            colourpalette80.BackColor = ShiftOSDesktop.artpad_colour_palettes(79);
-            colourpalette81.BackColor = ShiftOSDesktop.artpad_colour_palettes(80);
-            colourpalette82.BackColor = ShiftOSDesktop.artpad_colour_palettes(81);
-            colourpalette83.BackColor = ShiftOSDesktop.artpad_colour_palettes(82);
-            colourpalette84.BackColor = ShiftOSDesktop.artpad_colour_palettes(83);
-            colourpalette85.BackColor = ShiftOSDesktop.artpad_colour_palettes(84);
-            colourpalette86.BackColor = ShiftOSDesktop.artpad_colour_palettes(85);
-            colourpalette87.BackColor = ShiftOSDesktop.artpad_colour_palettes(86);
-            colourpalette88.BackColor = ShiftOSDesktop.artpad_colour_palettes(87);
-            colourpalette89.BackColor = ShiftOSDesktop.artpad_colour_palettes(88);
-            colourpalette90.BackColor = ShiftOSDesktop.artpad_colour_palettes(89);
-            colourpalette91.BackColor = ShiftOSDesktop.artpad_colour_palettes(90);
-            colourpalette92.BackColor = ShiftOSDesktop.artpad_colour_palettes(91);
-            colourpalette93.BackColor = ShiftOSDesktop.artpad_colour_palettes(92);
-            colourpalette94.BackColor = ShiftOSDesktop.artpad_colour_palettes(93);
-            colourpalette95.BackColor = ShiftOSDesktop.artpad_colour_palettes(94);
-            colourpalette96.BackColor = ShiftOSDesktop.artpad_colour_palettes(95);
-            colourpalette97.BackColor = ShiftOSDesktop.artpad_colour_palettes(96);
-            colourpalette98.BackColor = ShiftOSDesktop.artpad_colour_palettes(97);
-            colourpalette99.BackColor = ShiftOSDesktop.artpad_colour_palettes(98);
-            colourpalette100.BackColor = ShiftOSDesktop.artpad_colour_palettes(99);
-            colourpalette101.BackColor = ShiftOSDesktop.artpad_colour_palettes(100);
-            colourpalette102.BackColor = ShiftOSDesktop.artpad_colour_palettes(101);
-            colourpalette103.BackColor = ShiftOSDesktop.artpad_colour_palettes(102);
-            colourpalette104.BackColor = ShiftOSDesktop.artpad_colour_palettes(103);
-            colourpalette105.BackColor = ShiftOSDesktop.artpad_colour_palettes(104);
-            colourpalette106.BackColor = ShiftOSDesktop.artpad_colour_palettes(105);
-            colourpalette107.BackColor = ShiftOSDesktop.artpad_colour_palettes(106);
-            colourpalette108.BackColor = ShiftOSDesktop.artpad_colour_palettes(107);
-            colourpalette109.BackColor = ShiftOSDesktop.artpad_colour_palettes(108);
-            colourpalette110.BackColor = ShiftOSDesktop.artpad_colour_palettes(109);
-            colourpalette111.BackColor = ShiftOSDesktop.artpad_colour_palettes(110);
-            colourpalette112.BackColor = ShiftOSDesktop.artpad_colour_palettes(111);
-            colourpalette113.BackColor = ShiftOSDesktop.artpad_colour_palettes(112);
-            colourpalette114.BackColor = ShiftOSDesktop.artpad_colour_palettes(113);
-            colourpalette115.BackColor = ShiftOSDesktop.artpad_colour_palettes(114);
-            colourpalette116.BackColor = ShiftOSDesktop.artpad_colour_palettes(115);
-            colourpalette117.BackColor = ShiftOSDesktop.artpad_colour_palettes(116);
-            colourpalette118.BackColor = ShiftOSDesktop.artpad_colour_palettes(117);
-            colourpalette119.BackColor = ShiftOSDesktop.artpad_colour_palettes(118);
-            colourpalette120.BackColor = ShiftOSDesktop.artpad_colour_palettes(119);
-            colourpalette121.BackColor = ShiftOSDesktop.artpad_colour_palettes(120);
-            colourpalette122.BackColor = ShiftOSDesktop.artpad_colour_palettes(121);
-            colourpalette123.BackColor = ShiftOSDesktop.artpad_colour_palettes(122);
-            colourpalette124.BackColor = ShiftOSDesktop.artpad_colour_palettes(123);
-            colourpalette125.BackColor = ShiftOSDesktop.artpad_colour_palettes(124);
-            colourpalette126.BackColor = ShiftOSDesktop.artpad_colour_palettes(125);
-            colourpalette127.BackColor = ShiftOSDesktop.artpad_colour_palettes(126);
-            colourpalette128.BackColor = ShiftOSDesktop.artpad_colour_palettes(127);
-        */
-        }
-
-        public void savecolors()
-        {/*
-            ShiftOSDesktop.artpad_colour_palettes(0) = colourpalette1.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(1) = colourpalette2.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(2) = colourpalette3.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(3) = colourpalette4.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(4) = colourpalette5.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(5) = colourpalette6.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(6) = colourpalette7.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(7) = colourpalette8.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(8) = colourpalette9.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(9) = colourpalette10.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(10) = colourpalette11.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(11) = colourpalette12.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(12) = colourpalette13.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(13) = colourpalette14.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(14) = colourpalette15.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(15) = colourpalette16.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(16) = colourpalette17.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(17) = colourpalette18.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(18) = colourpalette19.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(19) = colourpalette20.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(20) = colourpalette21.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(21) = colourpalette22.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(22) = colourpalette23.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(23) = colourpalette24.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(24) = colourpalette25.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(25) = colourpalette26.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(26) = colourpalette27.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(27) = colourpalette28.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(28) = colourpalette29.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(29) = colourpalette30.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(30) = colourpalette31.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(31) = colourpalette32.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(32) = colourpalette33.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(33) = colourpalette34.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(34) = colourpalette35.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(35) = colourpalette36.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(36) = colourpalette37.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(37) = colourpalette38.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(38) = colourpalette39.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(39) = colourpalette40.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(40) = colourpalette41.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(41) = colourpalette42.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(42) = colourpalette43.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(43) = colourpalette44.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(44) = colourpalette45.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(45) = colourpalette46.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(46) = colourpalette47.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(47) = colourpalette48.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(48) = colourpalette49.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(49) = colourpalette50.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(50) = colourpalette51.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(51) = colourpalette52.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(52) = colourpalette53.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(53) = colourpalette54.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(54) = colourpalette55.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(55) = colourpalette56.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(56) = colourpalette57.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(57) = colourpalette58.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(58) = colourpalette59.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(59) = colourpalette60.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(60) = colourpalette61.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(61) = colourpalette62.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(62) = colourpalette63.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(63) = colourpalette64.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(64) = colourpalette65.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(65) = colourpalette66.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(66) = colourpalette67.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(67) = colourpalette68.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(68) = colourpalette69.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(69) = colourpalette70.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(70) = colourpalette71.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(71) = colourpalette72.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(72) = colourpalette73.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(73) = colourpalette74.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(74) = colourpalette75.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(75) = colourpalette76.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(76) = colourpalette77.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(77) = colourpalette78.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(78) = colourpalette79.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(79) = colourpalette80.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(80) = colourpalette81.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(81) = colourpalette82.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(82) = colourpalette83.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(83) = colourpalette84.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(84) = colourpalette85.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(85) = colourpalette86.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(86) = colourpalette87.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(87) = colourpalette88.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(88) = colourpalette89.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(89) = colourpalette90.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(90) = colourpalette91.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(91) = colourpalette92.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(92) = colourpalette93.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(93) = colourpalette94.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(94) = colourpalette95.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(95) = colourpalette96.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(96) = colourpalette97.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(97) = colourpalette98.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(98) = colourpalette99.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(99) = colourpalette100.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(100) = colourpalette101.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(101) = colourpalette102.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(102) = colourpalette103.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(103) = colourpalette104.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(104) = colourpalette105.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(105) = colourpalette106.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(106) = colourpalette107.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(107) = colourpalette108.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(108) = colourpalette109.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(109) = colourpalette110.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(110) = colourpalette111.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(111) = colourpalette112.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(112) = colourpalette113.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(113) = colourpalette114.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(114) = colourpalette115.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(115) = colourpalette116.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(116) = colourpalette117.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(117) = colourpalette118.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(118) = colourpalette119.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(119) = colourpalette120.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(120) = colourpalette121.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(121) = colourpalette122.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(122) = colourpalette123.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(123) = colourpalette124.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(124) = colourpalette125.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(125) = colourpalette126.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(126) = colourpalette127.BackColor;
-            ShiftOSDesktop.artpad_colour_palettes(127) = colourpalette128.BackColor;
-        */
-        }
-        //</unused>
 
         public void settoolcolours()
         {
@@ -1004,7 +694,7 @@ namespace ShiftOS.WinForms.Applications
         // ERROR: Handles clauses are not supported in C#
         private void btnzoomout_Click(object sender, EventArgs e)
         {
-            if (magnificationlevel > 1)
+            if (magnificationlevel > 0)
             {
                 magnificationlevel /= 2;
                 pnldrawingbackground.AutoScrollPosition = new Point(0, 0);
@@ -1019,16 +709,16 @@ namespace ShiftOS.WinForms.Applications
 
         private void setmagnification()
         {
-            magnifyRect.Width = (int)canvaswidth / magnificationlevel;
-            magnifyRect.Height = (int)canvasheight / magnificationlevel;
-            picdrawingdisplay.Size = new Size(canvaswidth * magnificationlevel, canvasheight * magnificationlevel);
+            magnifyRect.Width = canvaswidth / magnificationlevel;
+            magnifyRect.Height = canvasheight / magnificationlevel;
+            picdrawingdisplay.Size = new Size((int)(canvaswidth * magnificationlevel), (int)(canvasheight * magnificationlevel));
             if (picdrawingdisplay.Height > 468 && picdrawingdisplay.Width > 676)
             {
                 picdrawingdisplay.Location = new Point(0, 0);
             }
             else
             {
-                picdrawingdisplay.Location = new Point((pnldrawingbackground.Width - canvaswidth * magnificationlevel) / 2, (pnldrawingbackground.Height - canvasheight * magnificationlevel) / 2);
+                picdrawingdisplay.CenterParent();
             }
             picdrawingdisplay.Invalidate();
             lblzoomlevel.Text = magnificationlevel + "X";
@@ -1100,7 +790,7 @@ namespace ShiftOS.WinForms.Applications
         // ERROR: Handles clauses are not supported in C#
         private void txtnewcanvaswidth_TextChanged(object sender, EventArgs e)
         {
-            if (txtnewcanvaswidth.Text == "" | txtnewcanvasheight.Text == "")
+            if (txtnewcanvaswidth.Text == "" || txtnewcanvasheight.Text == "")
             {
                 if (txtnewcanvasheight.Text == "")
                 {
@@ -1118,7 +808,7 @@ namespace ShiftOS.WinForms.Applications
                     lbltotalpixels.Text = (Convert.ToInt32(txtnewcanvaswidth.Text) * Convert.ToInt32(txtnewcanvasheight.Text)).ToString();
                     if (ShiftoriumFrontend.UpgradeInstalled("artpad_limitless_pixels") == true)
                     {
-                        lbltotalpixels.ForeColor = Color.Black;
+                        lbltotalpixels.ForeColor = SkinEngine.LoadedSkin.ControlTextColor;
                     }
                     else
                     {
@@ -1128,7 +818,7 @@ namespace ShiftOS.WinForms.Applications
                         }
                         else
                         {
-                            lbltotalpixels.ForeColor = Color.Black;
+                            lbltotalpixels.ForeColor = SkinEngine.LoadedSkin.ControlTextColor;
                         }
                     }
                 }
@@ -1684,7 +1374,7 @@ namespace ShiftOS.WinForms.Applications
             {
                 case "Bold":
                     drawtextfontstyle = FontStyle.Bold;
-                    break;
+                    break; //BREAK COME ON HOO OH YEAHE CHECK IT OUT OH YEAH LETS GO SCRUATCHO HEY
                 case "Italic":
                     drawtextfontstyle = FontStyle.Italic;
                     break;
@@ -1851,7 +1541,17 @@ namespace ShiftOS.WinForms.Applications
 
         public void OnLoad()
         {
-            
+            foreach (Control ctrl in flowcolours.Controls)
+            {
+                ctrl.Tag = "keepbg";
+                ctrl.BackColor = Color.Black;
+            }
+            setuppreview();
+            settoolcolours();
+            AddFonts();
+            setuptoolbox();
+            determinevisiblepalettes();
+
         }
 
         public void OnSkinLoad()
@@ -1865,6 +1565,39 @@ namespace ShiftOS.WinForms.Applications
 
         public void OnUpgrade()
         {
+        }
+
+        private void toolStripMenuItem2_Click(object sender, EventArgs e)
+        {
+            magnificationlevel = 0.25f;
+            setmagnification();
+        }
+
+        private void toolStripMenuItem3_Click(object sender, EventArgs e)
+        {
+            magnificationlevel = 0.5f;
+            setmagnification();
+
+        }
+
+        private void toolStripMenuItem4_Click(object sender, EventArgs e)
+        {
+            magnificationlevel = 1;
+            setmagnification();
+
+        }
+
+        private void toolStripMenuItem5_Click(object sender, EventArgs e)
+        {
+            magnificationlevel = 2f;
+            setmagnification();
+
+        }
+
+        public void OpenFile(string file)
+        {
+            AppearanceManager.SetupWindow(this);
+            LoadPicture(file);
         }
     }
 
